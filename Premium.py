@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 SERVER_URL = "https://database-bw4h.onrender.com"
 API_ID = int(os.getenv('API_ID', 0))
 API_HASH = os.getenv('API_HASH', '')
-BOT_USERNAME = 'Pett_AI_US_bot'
+BOT_USERNAME = os.getenv('BOT_USERNAME', '')
 
 # ----------------------------
 # Client Management
