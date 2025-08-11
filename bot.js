@@ -2,31 +2,19 @@ const TelegramBot = require("node-telegram-bot-api");
 const axios = require("axios");
 const express = require("express");
 
-// Configuration
 const token = process.env.Token;
 const SESSION_SERVER = "https://pettai-darlington-session.onrender.com";
-const WEBHOOK_URL = process.env.WEBHOOK_URL
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
 const PORT = process.env.PORT || 3000;
 
-// Initialize bot (without polling)
-const bot = new TelegramBot(token);
+// Initialize bot in webhook mode
+const bot = new TelegramBot(token, { webHook: true });
 const app = express();
 const userStates = {};
 
-// Middleware to parse JSON
 app.use(express.json());
 
-// Set webhook route (call this once to setup)
-app.get('/set-webhook', async (req, res) => {
-    try {
-        await bot.setWebHook(`${WEBHOOK_URL}/webhook`);
-        res.send('Webhook set successfully');
-    } catch (error) {
-        res.status(500).send('Error setting webhook: ' + error.message);
-    }
-});
-
-// Webhook endpoint
+// Telegram will POST updates here
 app.post('/webhook', (req, res) => {
     bot.processUpdate(req.body);
     res.sendStatus(200);
