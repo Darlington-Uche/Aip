@@ -45,7 +45,7 @@ app.get('/', (req, res) => res.status(200).send('Bot is running...'));
 
 async function sendCode(phone) {
   try {
-    const res = await axios.post('${SERVER_URL}/send_code', { phone });
+    const res = await axios.post(`${SERVER_URL}/send_code`, { phone });
     return res.data.message === 'Code sent successfully';
   } catch (err) {
     console.error('Send code error:', err.message);
@@ -55,7 +55,7 @@ async function sendCode(phone) {
 
 async function createTelegramSession(phone, code) {
   try {
-    const res = await axios.post('${SERVER_URL}/create_session', { phone, code });
+    const res = await axios.post(`${SERVER_URL}/create_session`, { phone, code });
     return res.data.session || null;
   } catch (err) {
     console.error('Session creation error:', err.message);
@@ -66,7 +66,7 @@ async function createTelegramSession(phone, code) {
 async function saveSessionToDatabase(bot, chatId, session, userId) {
   const registrationTime = Date.now();
   try {
-    await axios.post('${SERVER_URL}/saveinfo', {
+    await axios.post(`${SERVER_URL}/saveinfo`, {
       userId: userId.toString(),
       data: {
         session: session,
