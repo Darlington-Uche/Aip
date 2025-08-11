@@ -4,8 +4,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 
 // === CONFIGURATION ===
-const token = "7623092176:AAEfiAdVWJe-Tzt7vhyoKNtNvHyEiIMpz34";
-const SERVER_URL = "https://pettai-darlington-server.onrender.com";
+const token = process.env.Token;
+const SERVER_URL = process.env.SERVER_URL;
 const PLAN_PRICES_USDT = {
   Basic: 0,
   Advanced: 10,
