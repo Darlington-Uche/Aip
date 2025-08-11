@@ -8,6 +8,7 @@
     "ethers": "^5.7.2",
     "express": "^5.1.0",
     "firebase-admin": "^13.4.0",
+    "dotenv": "^17.2.1",
     "node-telegram-bot-api": "^0.66.0"
   }
 }
