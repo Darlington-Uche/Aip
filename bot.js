@@ -18,7 +18,7 @@ const PAYMENT_TIMEOUT = 15 * 60 * 1000;
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
 app.use(bodyParser.json());
-const WEBHOOK_URL = "https://pettai-darlington-tg-bot.onrender.com/";
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
 bot.setWebHook(`${WEBHOOK_URL}/bot${token}`);
 
 // === UTILITY FUNCTIONS ===
