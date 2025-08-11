@@ -37,6 +37,7 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Webhook URL: ${WEBHOOK_URL}/webhook`);
 });
+
 // Utility: Clear state
 async function clearUserState(chatId) {
     if (userStates[chatId]?.timeout) {
@@ -66,7 +67,11 @@ function deleteAfter(chatId, msgId, delay = 2 * 60 * 1000) {
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     await clearUserState(chatId);
-    await bot.deleteMessage(chatId, msg.message_id).catch(() => {});
+    
+    // Only try to delete the /start message if it exists
+    if (msg.message_id) {
+        await bot.deleteMessage(chatId, msg.message_id).catch(() => {});
+    }
 
     const welcome = await bot.sendMessage(chatId,
         `*Welcome to Session Creator Bot*\n\n` +
@@ -86,7 +91,12 @@ bot.onText(/\/start/, async (msg) => {
 bot.on("callback_query", async (query) => {
     const chatId = query.message.chat.id;
     const data = query.data;
-    await bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+    
+    // Only delete the message if it exists
+    if (query.message?.message_id) {
+        await bot.deleteMessage(chatId, query.message.message_id).catch(() => {});
+    }
+    
     await clearUserState(chatId);
 
     if (data === "get_session") {
@@ -106,9 +116,15 @@ bot.on("callback_query", async (query) => {
 bot.on("message", async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
-    if (!userStates[chatId]) return;
+    
+    // Skip if it's not a text message or if user has no state
+    if (!text || !userStates[chatId]) return;
 
-    await bot.deleteMessage(chatId, msg.message_id).catch(() => {});
+    // Only try to delete if the message exists
+    if (msg.message_id) {
+        await bot.deleteMessage(chatId, msg.message_id).catch(() => {});
+    }
+    
     const state = userStates[chatId];
 
     try {
