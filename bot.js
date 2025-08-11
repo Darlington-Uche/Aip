@@ -91,14 +91,7 @@ function scheduleMessageDeletion(chatId, msgId, delay = 2 * 60 * 1000) {
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     await clearUserState(chatId);
-    
-    // Delete the /start command message
-    try {
-        await bot.deleteMessage(chatId, msg.message_id);
-    } catch (e) {
-        console.error("Error deleting /start message:", e.message);
-    }
-    
+  
     const welcomeMsg = await bot.sendMessage(chatId, 
         "*Welcome to Session Creator Bot*\n\n" +
         "I can help you create Telegram sessions\n\n" +
