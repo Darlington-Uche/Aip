@@ -84,10 +84,10 @@ async def rate_limit_delay(user_id: int, provider: str) -> None:
 # ----------------------------
 # AI Decision Making System with Multi-Provider Fallback
 # ----------------------------
-MISTRAL_API_KEY = "Ue7neaH2yvjQxwhq5n6YxORNveLv6h5h"  # Your Mistral key
+MISTRAL_API_KEY = os.getenv('MISTRAL_AI', '')
 ANTHROPIC_API_KEY = "your_anthropic_key_here"          # Leave empty if not using
-GEMINI_API_KEY = "AIzaSyD_3x_KbSS7jYB0jjLwlBO45tTqNEEKaA8"  
-OPENAI_API_KEY = "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"              # Leave empty if not using
+GEMINI_API_KEY = os.getenv('GEMINI', 'AIzaSyD_3x_KbSS7jYB0jjLwlBO45tTqNEEKaA8') "
+OPENAI_API_KEY = os.getenv('OPEN_AI', '')""              # Leave empty if not using
 HF_API_KEY = "your_huggingface_key_here"               # Leave empty if not using
 
 AI_PROVIDERS = [
