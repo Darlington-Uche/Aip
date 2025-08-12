@@ -3,7 +3,7 @@ const axios = require("axios");
 const express = require("express");
 
 // Configuration
-const token = process.env.Token;
+const token = process.env.TOKEN;
 const SESSION_SERVICE_URL = process.env.SERVER_URL;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 const PORT = process.env.PORT || 3000;
