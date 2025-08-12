@@ -42,9 +42,7 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return "Hello!"
-if __name__ == '__main__':
-    port = int(os.getenv('PORT', 3000))  
-    app.run(host='0.0.0.0', port=port)
+
 
 # ----------------------------
 # Rate Limiting Configuration
@@ -1369,6 +1367,10 @@ def run_async_code():
         finally:
             if 'loop' in locals():
                 loop.close()
+
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', 3000))  
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
     # Configure logging
