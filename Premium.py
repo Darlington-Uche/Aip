@@ -1369,10 +1369,6 @@ def run_async_code():
                 loop.close()
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 3000))  
-    app.run(host='0.0.0.0', port=port)
-
-if __name__ == '__main__':
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
@@ -1381,3 +1377,7 @@ if __name__ == '__main__':
     
     # Start the main async loop
     run_async_code()
+
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', 3000))  
+    app.run(host='0.0.0.0', port=port)
