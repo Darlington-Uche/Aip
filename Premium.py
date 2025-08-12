@@ -87,7 +87,7 @@ async def rate_limit_delay(user_id: int, provider: str) -> None:
 MISTRAL_API_KEY = os.getenv('MISTRAL_AI', '')
 ANTHROPIC_API_KEY = "your_anthropic_key_here"          # Leave empty if not using
 GEMINI_API_KEY = os.getenv('GEMINI', 'AIzaSyD_3x_KbSS7jYB0jjLwlBO45tTqNEEKaA8') 
-OPENAI_API_KEY = os.getenv('OPEN_AI', '')""              # Leave empty if not using
+OPENAI_API_KEY = os.getenv('OPEN_AI', '')          # Leave empty if not using
 HF_API_KEY = "your_huggingface_key_here"               # Leave empty if not using
 
 AI_PROVIDERS = [
