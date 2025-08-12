@@ -42,7 +42,9 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return "Hello!"
-
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', 3000))  
+    app.run(host='0.0.0.0', port=port)
 
 # ----------------------------
 # Rate Limiting Configuration
@@ -1377,6 +1379,3 @@ if __name__ == '__main__':
     
     # Start the main async loop
     run_async_code()
-if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5005))  # fallback to 5005 if PORT not in .env
-    app.run(host='0.0.0.0', port=port)
