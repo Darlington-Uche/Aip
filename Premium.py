@@ -1377,3 +1377,6 @@ if __name__ == '__main__':
     
     # Start the main async loop
     run_async_code()
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', 5005))  # fallback to 5005 if PORT not in .env
+    app.run(host='0.0.0.0', port=port)
