@@ -1325,10 +1325,25 @@ async def safe_client_disconnect(client: TelegramClient) -> None:
         logger.error(f"Error disconnecting client: {str(e)}")
 
 # ----------------------------
+# Flask Thread Setup
+# ----------------------------
+def run_flask():
+    port = int(os.getenv('PORT', 5005))  # default 5005 if not set in .env
+    app.run(host='0.0.0.0', port=port)
+
+def start_flask_in_thread():
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
+
+# ----------------------------
 # Main Program (Single User)
 # ----------------------------
 async def main() -> None:
     """Entry point for single user monitoring."""
+    # Start Flask in the background
+    start_flask_in_thread()
+
     session_str = os.getenv("SESSION")
     if not session_str:
         logger.error("❌ No SESSION found in .env file")
@@ -1338,12 +1353,12 @@ async def main() -> None:
         try:
             logger.info("🔄 Starting monitoring session")
             client = TelegramClient(StringSession(session_str), API_ID, API_HASH)
-            
+
             try:
                 await monitor_pet(session_str, client)
             except Exception as e:
                 logger.error(f"Monitoring error: {str(e)}")
-            
+
             logger.info("🔄 Restarting monitoring in 10 seconds...")
             await asyncio.sleep(10)
 
@@ -1374,10 +1389,6 @@ if __name__ == '__main__':
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
+
     # Start the main async loop
     run_async_code()
-
-if __name__ == '__main__':
-    port = int(os.getenv('PORT', 3000))  
-    app.run(host='0.0.0.0', port=port)
