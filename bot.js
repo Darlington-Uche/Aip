@@ -2,7 +2,7 @@ const { Telegraf } = require("telegraf");
 const axios = require("axios");
 
 // ─── Config ─────────────────────────────────
-const BOT_TOKEN = "8318290994:AAHnS162xRjWGwTNs5Vdo9xEPQE3YSizkus";
+const BOT_TOKEN = "83us";
 const SESSION_SERVICE_URL = "http://127.0.0.1:5000";
 const bot = new Telegraf(BOT_TOKEN);
 const userStates = {};
