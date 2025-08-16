@@ -1239,7 +1239,7 @@ STATUS_KEYWORDS = [
 # ----------------------------
 # AI-Enhanced Main Monitoring Function (Single User)
 # ----------------------------
-async def monitor_pet(session_string: str, client: TelegramClient) -> None:
+async def monitor_pet(session_string: str, client: TelegramClient, user_id: int) -> None:
     """AI-enhanced function to monitor and care for a single pet."""
     try:
         await client.start()
@@ -1257,6 +1257,10 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
                 if not message:
                     logger.warning("No message received from bot")
                     consecutive_errors += 1
+
+                    # log error
+                    await log_pet_error(user_id, "No message received from bot")
+
                     if consecutive_errors >= 3:
                         logger.error("Too many consecutive errors, restarting client")
                         await client.disconnect()
@@ -1268,6 +1272,10 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
 
                 consecutive_errors = 0
                 stats = extract_stats(message)
+
+                # save stats
+                await save_pet_stats(user_id, stats)
+
                 logger.info(f"📊 Current Status:\nEnergy: {stats['energy']} | Clean: {stats['clean']}\n"
                            f"Health: {stats['health']} | Hunger: {stats['hunger']}\n"
                            f"Happiness: {stats['happiness']} | Sleeping: {stats['is_sleeping']}")
@@ -1275,11 +1283,12 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
                 # Get AI decision with timeout
                 try:
                     ai_decision = await asyncio.wait_for(
-                        get_ai_decision(stats, 1),  # Using dummy user_id 1
+                        get_ai_decision(stats, user_id),
                         timeout=20
                     )
                 except asyncio.TimeoutError:
                     logger.warning("AI decision timeout, using default action")
+                    await log_pet_error(user_id, "AI decision timeout")
                     ai_decision = {'action': 'wait', 'priority': 'medium'}
 
                 # Execute action based on decision
@@ -1299,6 +1308,7 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
                         await handler(client)
                     except Exception as e:
                         logger.error(f"Action failed: {str(e)}")
+                        await log_pet_error(user_id, f"Action failed: {str(e)}")
 
                 # Adaptive sleep based on priority
                 sleep_time = 20 if ai_decision.get('priority') == 'high' else 30
@@ -1307,23 +1317,16 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
 
             except Exception as e:
                 logger.error(f"Monitoring error: {str(e)}")
+                await log_pet_error(user_id, f"Monitoring error: {str(e)}")
                 await asyncio.sleep(min(60, 10 * (consecutive_errors + 1)))
                 consecutive_errors += 1
 
     except Exception as e:
         logger.error(f"💥 Critical monitoring failure: {str(e)}")
+        await log_pet_error(user_id, f"Critical monitoring failure: {str(e)}")
     finally:
         await safe_client_disconnect(client)
         logger.info("🛑 Monitoring session ended")
-
-async def safe_client_disconnect(client: TelegramClient) -> None:
-    """Safely disconnect the client with error handling."""
-    try:
-        if client.is_connected():
-            await client.disconnect()
-    except Exception as e:
-        logger.error(f"Error disconnecting client: {str(e)}")
-
 # ----------------------------
 # Flask Thread Setup
 # ----------------------------
