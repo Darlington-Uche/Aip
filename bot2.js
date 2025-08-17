@@ -15,11 +15,16 @@ const PLAN_PRICES_USDT = {
 const PAYMENT_TIMEOUT = 15 * 60 * 1000;
 
 // === INIT BOT ===
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token);
 const app = express();
 app.use(bodyParser.json());
-const WEBHOOK_URL = process.env.WEBHOOK;
+
 bot.setWebHook(`${WEBHOOK_URL}/bot${token}`);
+
+app.post(`/bot${token}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
 
 // === UTILITY FUNCTIONS ===
 function delay(ms) {
