@@ -137,7 +137,7 @@ bot.onText(/\/start/, async (msg) => {
   const nameRaw = msg.from.username || msg.from.first_name || "User";
 
   try {
-    const res = await axios.get(`${SERVER_URL}/getinfo`);
+    const res = await axios.get(`${SERVER}/getinfo`);
     let user = res.data.find(u => u.id === userId.toString());
 
     if (!user) {
@@ -147,7 +147,7 @@ bot.onText(/\/start/, async (msg) => {
         name: nameRaw,
         plan: "Basic" // Default to Basic plan for new users
       };
-      await axios.post(`${SERVER_URL}/saveinfo`, {
+      await axios.post(`${SERVER}/saveinfo`, {
         userId: userId.toString(),
         data: newUser
       });
@@ -256,7 +256,7 @@ bot.onText(/\/wordle (.+)/, async (msg, match) => {
 
   try {
     // Check if today's Wordle already exists
-    const checkResponse = await axios.post(`${SERVER_URL}/checkWordle`, {
+    const checkResponse = await axios.post(`${SERVER}/checkWordle`, {
       userId: userId.toString()
     });
 
@@ -278,7 +278,7 @@ bot.onText(/\/wordle (.+)/, async (msg, match) => {
     }
 
     // Save new Wordle
-    const saveResponse = await axios.post(`${SERVER_URL}/saveWordle`, {
+    const saveResponse = await axios.post(`${SERVER}/saveWordle`, {
       userId: userId.toString(),
       wordle: wordleText,
       status: "Unverified"
@@ -318,7 +318,7 @@ bot.on('callback_query', async (query) => {
   const nameRaw = query.from.username || query.from.first_name || "User";
 
   try {
-    const res = await axios.get(`${SERVER_URL}/getinfo`);
+    const res = await axios.get(`${SERVER}/getinfo`);
     let user = res.data.find(u => u.id === userId.toString());
 
     if (!user) {
@@ -343,7 +343,7 @@ bot.on('callback_query', async (query) => {
   // Handle back_to_main
  if (data === "back_to_main") {
     try {
-      const res = await axios.get(`${SERVER_URL}/getinfo`);
+      const res = await axios.get(`${SERVER}/getinfo`);
       let user = res.data.find(u => u.id === userId.toString());
       const bufferBalance = user.balance || 0;
       const userPlan = user.plan || "Basic"; // Moved this line up before hourlyRate calculation
@@ -409,7 +409,7 @@ if (data === "terminate" || data === "errors" || data === "chat_support" || data
   // Handle errors separately
   if (data === "errors") {
     try {
-      const res = await axios.post(`${SERVER_URL}/getUserErrors`, {
+      const res = await axios.post(`${SERVER}/getUserErrors`, {
         user_id: query.from.id.toString()
       });
 
@@ -460,7 +460,7 @@ if (data.startsWith("restart_")) {
 
     try {
       // Reset user plan
-      await axios.post(`${SERVER_URL}/updateinfo`, {
+      await axios.post(`${SERVER}/updateinfo`, {
         userId: userId,
         data: {
             plan: null,
