@@ -81,7 +81,7 @@ async function saveSessionToDatabase(bot, chatId, session, userId) {
 
 async function getUserStats(userId) {
   try {
-    const res = await axios.post(`${SERVER}/Pet_stats`, {
+    const res = await axios.post(`${SERVER}/getUserStats`, {
       user_id: userId.toString()
     });
 
