@@ -1239,11 +1239,13 @@ STATUS_KEYWORDS = [
 # ----------------------------
 # AI-Enhanced Main Monitoring Function (Single User)
 # ----------------------------
-async def monitor_pet(session_string: str, client: TelegramClient, user_id: int) -> None:
+async def monitor_pet(session_string: str, client: TelegramClient) -> None:
     """AI-enhanced function to monitor and care for a single pet."""
     try:
         await client.start()
-        logger.info("🐾 Pet monitoring session started")
+        me = await client.get_me()        # <-- Get user info from session
+        user_id = me.id                   # <-- Extract user_id
+        logger.info(f"🐾 Pet monitoring session started for user {user_id}")
 
         start_time = time.time()
         max_duration = 180 * 60  # 3 hours runtime
