@@ -1240,16 +1240,22 @@ STATUS_KEYWORDS = [
 # AI-Enhanced Main Monitoring Function (Single User)
 # ----------------------------
 async def monitor_pet(session_string: str, client: TelegramClient) -> None:
-    """AI-enhanced function to monitor and care for a single pet."""
+    """AI-enhanced function to monitor and care for a single pet, with Wordle and Door automation."""
     try:
         await client.start()
-        me = await client.get_me()        # <-- Get user info from session
-        user_id = me.id                   # <-- Extract user_id
+        me = await client.get_me()
+        user_id = me.id
         logger.info(f"🐾 Pet monitoring session started for user {user_id}")
 
         start_time = time.time()
         max_duration = 180 * 60  # 3 hours runtime
         consecutive_errors = 0
+
+        # Initialize timers for Wordle and Door automation
+        last_wordle_time = 0
+        last_door_time = 0
+        wordle_interval = 30 * 60  # 2 hours
+        door_interval = 30 * 60    # 2 hours
 
         while time.time() - start_time < max_duration:
             try:
@@ -1259,8 +1265,6 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
                 if not message:
                     logger.warning("No message received from bot")
                     consecutive_errors += 1
-
-                    # log error
                     await log_pet_error(user_id, "No message received from bot")
 
                     if consecutive_errors >= 3:
@@ -1274,15 +1278,13 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
 
                 consecutive_errors = 0
                 stats = extract_stats(message)
-
-                # save stats
                 await save_pet_stats(user_id, stats)
 
                 logger.info(f"📊 Current Status:\nEnergy: {stats['energy']} | Clean: {stats['clean']}\n"
-                           f"Health: {stats['health']} | Hunger: {stats['hunger']}\n"
-                           f"Happiness: {stats['happiness']} | Sleeping: {stats['is_sleeping']}")
+                            f"Health: {stats['health']} | Hunger: {stats['hunger']}\n"
+                            f"Happiness: {stats['happiness']} | Sleeping: {stats['is_sleeping']}")
 
-                # Get AI decision with timeout
+                # AI decision for pet care
                 try:
                     ai_decision = await asyncio.wait_for(
                         get_ai_decision(stats, user_id),
@@ -1293,7 +1295,6 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
                     await log_pet_error(user_id, "AI decision timeout")
                     ai_decision = {'action': 'wait', 'priority': 'medium'}
 
-                # Execute action based on decision
                 action_handlers = {
                     'emergency': (emergency_care, "🚨 Emergency care"),
                     'wake': (wake_pet, "☀️ Waking pet"),
@@ -1312,7 +1313,31 @@ async def monitor_pet(session_string: str, client: TelegramClient) -> None:
                         logger.error(f"Action failed: {str(e)}")
                         await log_pet_error(user_id, f"Action failed: {str(e)}")
 
-                # Adaptive sleep based on priority
+                # ----------------------------
+                # Automated Wordle (every 2 hours)
+                # ----------------------------
+                if time.time() - last_wordle_time > wordle_interval:
+                    logger.info("🎮 Running automated Wordle...")
+                    try:
+                        await auto_wordle(client, user_id)
+                        last_wordle_time = time.time()
+                    except Exception as e:
+                        logger.error(f"Wordle automation failed: {str(e)}")
+                        await log_pet_error(user_id, f"Wordle automation failed: {str(e)}")
+
+                # ----------------------------
+                # Automated Doors (every 2 hours)
+                # ----------------------------
+                if time.time() - last_door_time > door_interval:
+                    logger.info("🚪 Running automated Door sequence...")
+                    try:
+                        await auto_door(client, user_id)
+                        last_door_time = time.time()
+                    except Exception as e:
+                        logger.error(f"Door automation failed: {str(e)}")
+                        await log_pet_error(user_id, f"Door automation failed: {str(e)}")
+
+                # Adaptive sleep based on AI priority
                 sleep_time = 20 if ai_decision.get('priority') == 'high' else 30
                 logger.info(f"⏳ Next check in {sleep_time} seconds")
                 await asyncio.sleep(sleep_time)
