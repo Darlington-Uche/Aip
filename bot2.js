@@ -177,35 +177,33 @@ bot.onText(/\/start/, async (msg) => {
     const wordleStatus = await getWordleStatus(userId);
 
     // 🎨 ASCII art face
-    const asciiArt = `
-(●   ●)
-   ᴖ
-`;
+    // 🎨 ASCII art face (escaped for MarkdownV2)
+const asciiArt = "\\(●   ●\\)\n   ᴖ";
 
-    const infoText =
-      `${asciiArt}\n` +
-      `👤 ***User:*** \`${name}\`\n📋 ***Plan:*** \`${plan}\`\n\n` +
-      `🤖 ***Bot:*** \`Pet_Ai\`\n📊 ***Stats:*** \`${userStats}\`\n\n` +
-      `🧩 *Today's Wordle:* \`${wordleStatus.text}\` 👉 ${
-        wordleStatus.status === "Verified"
-          ? "✅ Verified"
-          : wordleStatus.status === "Unverified"
-          ? "🕒 Pending"
-          : "❌ Not submitted"
-      }\n\n` +
-      `🧸Status : Active ✅\n\n` +
-      `Submit Daily Wordle with \`/Wordle {the Word}\`\n\n` +
-      `Share🧡: \`https://t.me/ConitioiBot\``;
+const infoText =
+  `${asciiArt}\n\n` +
+  `👤 *User:* \`${name}\`\n📋 *Plan:* \`${plan}\`\n\n` +
+  `🤖 *Bot:* \`Pet_Ai\`\n📊 *Stats:* \`${userStats}\`\n\n` +
+  `🧩 *Today's Wordle:* \`${wordleStatus.text}\` 👉 ${
+    wordleStatus.status === "Verified"
+      ? "✅ Verified"
+      : wordleStatus.status === "Unverified"
+      ? "🕒 Pending"
+      : "❌ Not submitted"
+  }\n\n` +
+  `🧸Status : Active ✅\n\n` +
+  `Submit Daily Wordle with \`/Wordle {the Word}\`\n\n` +
+  `Share🧡: \`https://t.me/ConitioiBot\``;
 
-    await bot.sendMessage(chatId, infoText, {
-      parse_mode: "MarkdownV2",
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "Errors", callback_data: "errors" }],
-          [{ text: "Support 🧸", callback_data: "chat_support" }]
-        ]
-      }
-    });
+await bot.sendMessage(chatId, infoText, {
+  parse_mode: "MarkdownV2",
+  reply_markup: {
+    inline_keyboard: [
+      [{ text: "Errors", callback_data: "errors" }],
+      [{ text: "Support 🧸", callback_data: "chat_support" }]
+    ]
+  }
+});
 
   } catch (err) {
     console.error("Start Error:", err.message);
