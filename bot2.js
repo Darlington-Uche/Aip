@@ -132,17 +132,23 @@ async function getWordleStatus(userId) {
 
 // === MESSAGE HANDLERS ===
 // === MESSAGE HANDLERS ===  
+// === MESSAGE HANDLERS ===  
 bot.onText(/\/start/, async (msg) => {  
   const chatId = msg.chat.id;  
   const userId = msg.from.id;  
   const nameRaw = msg.from.username || msg.from.first_name || "User";  
 
   try {  
+    // 🔹 Fetch all info  
     const res = await axios.get(`${SERVER}/getinfo`);  
     let user = res.data.find(u => u.id === userId.toString());  
 
-    if (!user) {  
-      // 🚫 Don't create new user if not found  
+    // 🔹 Check if user has stats (this defines if they are registered)  
+    const userStats = await getUserStats(userId);  
+    const isRegistered = userStats && userStats.trim() !== "";  
+
+    if (!isRegistered) {  
+      // 🚫 User has no stats → not registered  
       const welcomeText =  
         `💙🤍 *Connect bot below:* \n\n` +  
         `Choose an option to get started ⬇️`;  
@@ -161,9 +167,9 @@ bot.onText(/\/start/, async (msg) => {
       return;  
     }  
 
-    // ✅ If user exists, show user dashboard  
-    const bufferBalance = user.balance || 0;  
-    const userPlan = user.plan || "Basic";  
+    // ✅ If user is registered (has stats), show dashboard  
+    const bufferBalance = user?.balance || 0;  
+    const userPlan = user?.plan || "Basic";  
     const hourlyRate = userPlan === "Premium" ? 120 : 50;  
 
     const planRaw = userPlan;  
@@ -175,7 +181,7 @@ bot.onText(/\/start/, async (msg) => {
     const infoText =   
       `💳 *Buffer Balance:* \`${balance}\` Buff\n💸 *Cost per hour:* \`${hourlyRate}\` Buff\n\n` +  
       `👤 ***User:*** \`${name}\`\n📋 ***Plan:*** \`${plan}\`\n\n` +  
-      `🤖 ***Bot:*** \`Pet_Ai\`\n📊 ***Stats:*** \`${await getUserStats(userId)}\`\n\n` +  
+      `🤖 ***Bot:*** \`Pet_Ai\`\n📊 ***Stats:*** \`${userStats}\`\n\n` +  
       `🧩 *Today's Wordle:* \`${wordleStatus.text}\` 👉 ${wordleStatus.status === "Verified" ? "✅ Verified" : wordleStatus.status === "Unverified" ? "🕒 Pending" : "❌ Not submitted"}\n\n` +  
       `🧸Status : Active ✅\n\n` +  
       `Submit Daily Wordle with \`/Wordle {the Word}\`\n\n` +  
