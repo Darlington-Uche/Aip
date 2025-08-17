@@ -184,9 +184,24 @@ app.post('/getUserStats', async (req, res) => {
   try {
     const doc = await db.collection('Stats').doc(String(user_id)).get();
     if (!doc.exists) {
-      return res.status(404).send('No stats found for this user');
+      return res.status(404).json({ message: 'No stats found for this user' });
     }
-    res.status(200).json(doc.data());
+
+    const data = doc.data();
+
+    // ensure all keys exist with defaults
+    const stats = {
+      clean: data.clean || 0,
+      energy: data.energy || 0,
+      happiness: data.happiness || 0,
+      health: data.health || 0,
+      hunger: data.hunger || 0,
+      in_bedroom: data.in_bedroom || false,
+      is_sleeping: data.is_sleeping || false,
+      updatedAt: data.updatedAt || new Date().toISOString()
+    };
+
+    res.status(200).json(stats);
   } catch (err) {
     res.status(500).send('Failed to fetch user stats');
   }
