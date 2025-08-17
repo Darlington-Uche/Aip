@@ -18,7 +18,7 @@ const PAYMENT_TIMEOUT = 15 * 60 * 1000;
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
 app.use(bodyParser.json());
-const WEBHOOK_URL = "https://pettai-darlington-tg-bot.onrender.com/";
+const WEBHOOK_URL = process.env.WEBHOOK;
 bot.setWebHook(`${WEBHOOK_URL}/bot${token}`);
 
 // === UTILITY FUNCTIONS ===
@@ -44,7 +44,7 @@ app.get('/', (req, res) => res.status(200).send('Bot is running...'));
 
 async function sendCode(phone) {
   try {
-    const res = await axios.post('https://pettai-darlington-session.onrender.com/send_code', { phone });
+    const res = await axios.post(`${SERVER}/send_code`, { phone });
     return res.data.message === 'Code sent successfully';
   } catch (err) {
     console.error('Send code error:', err.message);
@@ -54,7 +54,7 @@ async function sendCode(phone) {
 
 async function createTelegramSession(phone, code) {
   try {
-    const res = await axios.post('https://pettai-darlington-session.onrender.com/create_session', { phone, code });
+    const res = await axios.post(`${SERVER}/create_session`, { phone, code });
     return res.data.session || null;
   } catch (err) {
     console.error('Session creation error:', err.message);
@@ -65,7 +65,7 @@ async function createTelegramSession(phone, code) {
 async function saveSessionToDatabase(bot, chatId, session, userId) {
   const registrationTime = Date.now();
   try {
-    await axios.post('https://pettai-darlington-server.onrender.com/saveinfo', {
+    await axios.post(`${SERVER}/saveinfo`, {
       userId: userId.toString(),
       data: {
         session: session,
@@ -79,7 +79,7 @@ async function saveSessionToDatabase(bot, chatId, session, userId) {
 
 async function getUserStats(userId) {
   try {
-    const res = await axios.post(`${SERVER_URL}/getUserStats`, {
+    const res = await axios.post(`${SERVER}/getUserStats`, {
       user_id: userId.toString()
     });
 
