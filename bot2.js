@@ -151,62 +151,61 @@ bot.onText(/\/start/, async (msg) => {
   const name = msg.from.username || msg.from.first_name || "User";
 
   try {
-    // Fetch info
-    const res = await axios.get(`${SERVER}/getinfo`);
-    let user = res.data.find(u => u.id === userId.toString());
+    // Fetch stats    
+    const userStats = await getUserStats(userId);    
+    const isRegistered = userStats && userStats.trim() !== "";    
 
-    // Fetch stats
-    const userStats = await getUserStats(userId);
-    const isRegistered = userStats && userStats.trim() !== "";
+    if (!isRegistered) {    
+      await bot.sendMessage(chatId, "You Need a pet boss?", {    
+        reply_markup: {    
+          inline_keyboard: [    
+            [{ text: "Grab a Bot 0.5$", callback_data: "grab_bot" }],    
+            [{ text: "Wordle", callback_data: "wordle_submit" }]    
+          ]    
+        }    
+      });    
+      return;    
+    }    
 
-    if (!isRegistered) {
-      const welcomeText =
-        "💙🤍 Connect bot below:\n\n" +
-        "Choose an option to get started ⬇️";
+    const wordleStatus = await getWordleStatus(userId);    
 
-      await bot.sendMessage(chatId, welcomeText, {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "A friend for your PettAI (Subscribe)", callback_data: "pett_ai_subscribe" }],
-            [{ text: "Wordle Submit", callback_data: "wordle_submit" }]
-          ]
-        }
-      });
-      return;
-    }
+    const asciiArt = "(●   ●)\n   ᴖ";    
 
-    const userPlan = user?.plan || "Basic";
-    const wordleStatus = await getWordleStatus(userId);
+    const infoText =    
+      `${asciiArt}\n\n` +    
+      `User: ${name}\n\n` +    
+      `Bot: Pet_Ai\nStats:\n${userStats}\n\n` +    
+      `Today's Wordle: ${wordleStatus.text} 👉 ${    
+        wordleStatus.status === "Verified"    
+          ? "✅ Verified"    
+          : wordleStatus.status === "Unverified"    
+          ? "🕒 Pending"    
+          : "❌ Not submitted"    
+      }\n\n` +    
+      `Status: Active ✅\n\n` +    
+      `Submit Daily Wordle with /Wordle {the Word}\n\n` +    
+      `Share: https://t.me/ConitioiBot`;    
 
-    const asciiArt = "(●   ●)\n   ᴖ";
-
-    const infoText =
-      `${asciiArt}\n\n` +
-      `User: ${name}\nPlan: ${userPlan}\n\n` +
-      `Bot: Pet_Ai\nStats:\n${userStats}\n\n` +
-      `Today's Wordle: ${wordleStatus.text} 👉 ${
-        wordleStatus.status === "Verified"
-          ? "✅ Verified"
-          : wordleStatus.status === "Unverified"
-          ? "🕒 Pending"
-          : "❌ Not submitted"
-      }\n\n` +
-      `Status: Active ✅\n\n` +
-      `Submit Daily Wordle with /Wordle {the Word}\n\n` +
-      `Share: https://t.me/ConitioiBot`;
-
-    await bot.sendMessage(chatId, infoText, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "Errors", callback_data: "errors" }],
-          [{ text: "Support 🧸", callback_data: "chat_support" }]
-        ]
-      }
+    await bot.sendMessage(chatId, infoText, {    
+      reply_markup: {    
+        inline_keyboard: [    
+          [{ text: "Errors", callback_data: "errors" }],    
+          [{ text: "Support 🧸", callback_data: "chat_support" }]    
+        ]    
+      }    
     });
 
   } catch (err) {
     console.error("Start Error:", err.message);
-    await bot.sendMessage(chatId, "⚠️ Something went wrong. Please try again later.");
+    await bot.sendMessage(chatId, "⚠️ Failed to load user stats or user doesn't exist");
+    await bot.sendMessage(chatId, "You Need a pet boss?", {    
+      reply_markup: {    
+        inline_keyboard: [    
+          [{ text: "Grab a Bot 0.5$", callback_data: "grab_bot" }],    
+          [{ text: "Wordle", callback_data: "wordle_submit" }]    
+        ]    
+      }    
+    });
   }
 });
 bot.onText(/\/wordle (.+)/, async (msg, match) => {
