@@ -106,7 +106,7 @@ async function getUserStats(userId) {
 // First, add this helper function to get Wordle status
 async function getWordleStatus(userId) {
   try {
-    const res = await axios.post(`${SERVER_URL}/checkWordle`, {
+    const res = await axios.post(`${SERVER}/checkWordle`, {
       userId: userId.toString()
     });
     
