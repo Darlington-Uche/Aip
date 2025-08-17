@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 
 // === CONFIGURATION ===
 const token = process.env.TOKEN;
-const SERVER_URL = process.env.SERVER;
+const SERVER = process.env.SERVER;
 const PLAN_PRICES_USDT = {
   Basic: 0,
   Advanced: 10,
