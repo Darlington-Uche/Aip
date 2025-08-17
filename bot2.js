@@ -21,10 +21,7 @@ app.use(bodyParser.json());
 
 bot.setWebHook(`${WEBHOOK_URL}/bot${token}`);
 
-app.post(`/bot${token}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
+
 
 // === UTILITY FUNCTIONS ===
 function delay(ms) {
