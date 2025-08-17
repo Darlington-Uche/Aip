@@ -984,7 +984,7 @@ async def auto_door(client: TelegramClient, user_id: int) -> None:
         if not await click(client, "Games"):
             logger.error("🚫 Failed to find first Games button i")
             return
-        await asyncio.sleep(2)
+        await asyncio.sleep(4)
         
         # Second Games button
         if not await click(client, "Games"):
@@ -1005,7 +1005,7 @@ async def auto_door(client: TelegramClient, user_id: int) -> None:
             logger.error(f"🚫 Failed to find {selected_door}")
             return
         logger.info(f"🚪 Selected {selected_door}")
-        await asyncio.sleep(3)
+        await asyncio.sleep(4)
         
         # First back click
         if not await click(client, "⬅️"):
@@ -1040,17 +1040,17 @@ async def auto_wordle(client: TelegramClient, user_id: str) -> bool:
     if not await click(client, "Games 🎮"):
         logger.error("🚫 Failed to find Games button")
         return False
-    await asyncio.sleep(2)
+    await asyncio.sleep(4)
        # Navigate to Wordle game
     if not await click(client, "Games 🎮"):
         logger.error("🚫 Failed to find Games button")
         return False
-    await asyncio.sleep(2)
+    await asyncio.sleep(4)
     
     if not await click(client, "Wordle"):
         logger.error("🚫 Failed to find Wordle button")
         return False
-    await asyncio.sleep(2)
+    await asyncio.sleep(3)
     
     # Check current message
     messages = await client.get_messages(BOT_USERNAME, limit=1)
