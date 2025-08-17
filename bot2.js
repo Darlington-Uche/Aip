@@ -135,87 +135,83 @@ async function getWordleStatus(userId) {
 // === MESSAGE HANDLERS ===
 // === MESSAGE HANDLERS ===  
 // === MESSAGE HANDLERS ===  
-bot.onText(/\/start/, async (msg) => {  
-  const chatId = msg.chat.id;  
-  const userId = msg.from.id;  
-  const nameRaw = msg.from.username || msg.from.first_name || "User";  
+bot.onText(/\/start/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const nameRaw = msg.from.username || msg.from.first_name || "User";
 
-  try {  
-    // 🔹 Fetch all info  
-    const res = await axios.get(`${SERVER}/getinfo`);  
-    let user = res.data.find(u => u.id === userId.toString());  
+  try {
+    // 🔹 Fetch all info
+    const res = await axios.get(`${SERVER}/getinfo`);
+    let user = res.data.find(u => u.id === userId.toString());
 
-    // 🔹 Check if user has stats (this defines if they are registered)  
-    const userStats = await getUserStats(userId);  
-    const isRegistered = userStats && userStats.trim() !== "";  
+    // 🔹 Check if user has stats (this defines if they are registered)
+    const userStats = await getUserStats(userId);
+    const isRegistered = userStats && userStats.trim() !== "";
 
-    if (!isRegistered) {  
-      // 🚫 User has no stats → not registered  
-      const welcomeText =  
-        `💙🤍 *Connect bot below:* \n\n` +  
-        `Choose an option to get started ⬇️`;  
+    if (!isRegistered) {
+      // 🚫 User has no stats → not registered
+      const welcomeText =
+        `💙🤍 *Connect bot below:* \n\n` +
+        `Choose an option to get started ⬇️`;
 
-      const buttons = {  
-        reply_markup: {  
-          inline_keyboard: [  
-            [{ text: "A friend for your PettAI (Subscribe)", callback_data: "pett_ai_subscribe" }],  
-            [{ text: "Wordle Submit", callback_data: "wordle_submit" }]  
-          ]  
-        },  
-        parse_mode: "Markdown"  
-      };  
+      const buttons = {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "A friend for your PettAI (Subscribe)", callback_data: "pett_ai_subscribe" }],
+            [{ text: "Wordle Submit", callback_data: "wordle_submit" }]
+          ]
+        },
+        parse_mode: "Markdown"
+      };
 
-      await bot.sendMessage(chatId, welcomeText, buttons);  
-      return;  
-    }  
+      await bot.sendMessage(chatId, welcomeText, buttons);
+      return;
+    }
 
-    // ✅ If user is registered (has stats), show dashboard  
-    const bufferBalance = user?.balance || 0;  
-    const userPlan = user?.plan || "Basic";  
-    const hourlyRate = userPlan === "Premium" ? 120 : 50;  
+    // ✅ If user is registered (has stats), show dashboard
+    const userPlan = user?.plan || "Basic";
+    const name = escapeMarkdownV2(nameRaw);
+    const plan = escapeMarkdownV2(userPlan);
 
-    const planRaw = userPlan;  
-    const name = escapeMarkdownV2(nameRaw);  
-    const plan = escapeMarkdownV2(planRaw);  
-    const balance = escapeMarkdownV2(bufferBalance.toString());  
+    const wordleStatus = await getWordleStatus(userId);
 
-    const wordleStatus = await getWordleStatus(userId);  
-    const infoText =   
-      `💳 *Buffer Balance:* \`${balance}\` Buff\n💸 *Cost per hour:* \`${hourlyRate}\` Buff\n\n` +  
-      `👤 ***User:*** \`${name}\`\n📋 ***Plan:*** \`${plan}\`\n\n` +  
-      `🤖 ***Bot:*** \`Pet_Ai\`\n📊 ***Stats:*** \`${userStats}\`\n\n` +  
-      `🧩 *Today's Wordle:* \`${wordleStatus.text}\` 👉 ${wordleStatus.status === "Verified" ? "✅ Verified" : wordleStatus.status === "Unverified" ? "🕒 Pending" : "❌ Not submitted"}\n\n` +  
-      `🧸Status : Active ✅\n\n` +  
-      `Submit Daily Wordle with \`/Wordle {the Word}\`\n\n` +  
-      `Share🧡: \`https://t.me/ConitioiBot\``;  
+    // 🎨 ASCII art face
+    const asciiArt = `
+(●   ●)
+   ᴖ
+`;
 
-    const keyboard = {  
-      reply_markup: {  
-        inline_keyboard: [  
-          [  
-            { text: "Terminate", callback_data: "terminate" },  
-            { text: "Errors", callback_data: "errors" }  
-          ],  
-          [  
-            { text: "Buy Points", callback_data: "buy_points" },  
-            { text: "Chat Support 🧸", callback_data: "chat_support" }  
-          ]  
-        ]  
-      },  
-      parse_mode: "MarkdownV2"  
-    };  
+    const infoText =
+      `${asciiArt}\n` +
+      `👤 ***User:*** \`${name}\`\n📋 ***Plan:*** \`${plan}\`\n\n` +
+      `🤖 ***Bot:*** \`Pet_Ai\`\n📊 ***Stats:*** \`${userStats}\`\n\n` +
+      `🧩 *Today's Wordle:* \`${wordleStatus.text}\` 👉 ${
+        wordleStatus.status === "Verified"
+          ? "✅ Verified"
+          : wordleStatus.status === "Unverified"
+          ? "🕒 Pending"
+          : "❌ Not submitted"
+      }\n\n` +
+      `🧸Status : Active ✅\n\n` +
+      `Submit Daily Wordle with \`/Wordle {the Word}\`\n\n` +
+      `Share🧡: \`https://t.me/ConitioiBot\``;
 
-    await bot.sendPhoto(chatId, 'https://ibb.co/d0f0wN4K', {  
-      caption: infoText,  
-      ...keyboard  
-    });  
+    await bot.sendMessage(chatId, infoText, {
+      parse_mode: "MarkdownV2",
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "Errors", callback_data: "errors" }],
+          [{ text: "Support 🧸", callback_data: "chat_support" }]
+        ]
+      }
+    });
 
-  } catch (err) {  
-    console.error("Start Error:", err.message);  
-    await bot.sendMessage(chatId, "⚠️ Something went wrong. Please try again later.");  
-  }  
+  } catch (err) {
+    console.error("Start Error:", err.message);
+    await bot.sendMessage(chatId, "⚠️ Something went wrong. Please try again later.");
+  }
 });
-
 bot.onText(/\/wordle (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
