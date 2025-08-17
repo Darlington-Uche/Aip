@@ -131,122 +131,81 @@ async function getWordleStatus(userId) {
 
 
 // === MESSAGE HANDLERS ===
-bot.onText(/\/start/, async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const nameRaw = msg.from.username || msg.from.first_name || "User";
+// === MESSAGE HANDLERS ===  
+bot.onText(/\/start/, async (msg) => {  
+  const chatId = msg.chat.id;  
+  const userId = msg.from.id;  
+  const nameRaw = msg.from.username || msg.from.first_name || "User";  
 
-  try {
-    const res = await axios.get(`${SERVER}/getinfo`);
-    let user = res.data.find(u => u.id === userId.toString());
+  try {  
+    const res = await axios.get(`${SERVER}/getinfo`);  
+    let user = res.data.find(u => u.id === userId.toString());  
 
-    if (!user) {
-      const newUser = {
-        id: userId.toString(),
-        balance: 3000,
-        name: nameRaw,
-        plan: "Basic" // Default to Basic plan for new users
-      };
-      await axios.post(`${SERVER}/saveinfo`, {
-        userId: userId.toString(),
-        data: newUser
-      });
-      user = newUser;
-    }
+    if (!user) {  
+      // 🚫 Don't create new user if not found  
+      const welcomeText =  
+        `💙🤍 *Connect bot below:* \n\n` +  
+        `Choose an option to get started ⬇️`;  
 
-    const bufferBalance = user.balance || 0;
-    const userPlan = user.plan || "Basic";
-    const hourlyRate = userPlan === "Premium" ? 120 : 50;
-  if (userPlan === "Invalid") {
-  const message = `⚠️ *Your Session has been terminated...*\n\n` +
-    `Due to *low balance*, a *tremendous error*, or *disconnection*.\n\n` +
-    `Do well to *reconnect* or *buy buff*.\n\n` +
-    `🧸 _We're here to help you bounce back!_`;
+      const buttons = {  
+        reply_markup: {  
+          inline_keyboard: [  
+            [{ text: "A friend for your PettAI (Subscribe)", callback_data: "pett_ai_subscribe" }],  
+            [{ text: "Wordle Submit", callback_data: "wordle_submit" }]  
+          ]  
+        },  
+        parse_mode: "Markdown"  
+      };  
 
-  const invalidPlanKeyboard = {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "🛒 Buy Buff", callback_data: "buy_points" },
-          { text: "🔄 Restart", callback_data: `restart_${userId}` }
-        ],
-        [
-          { text: "🧸 Support", callback_data: "chat_support" }
-        ]
-      ]
-    },
-    parse_mode: "Markdown"
-  };
+      await bot.sendMessage(chatId, welcomeText, buttons);  
+      return;  
+    }  
 
-  await bot.sendMessage(chatId, message, invalidPlanKeyboard);
-  return; // ⛔ Stop further processing
-}
-    if (user.session && (userPlan === "Premium" || userPlan === "Basic")) {
-  const planRaw = userPlan;
-  const name = escapeMarkdownV2(nameRaw);
-  const plan = escapeMarkdownV2(planRaw);
-  const balance = escapeMarkdownV2(bufferBalance.toString());
+    // ✅ If user exists, show user dashboard  
+    const bufferBalance = user.balance || 0;  
+    const userPlan = user.plan || "Basic";  
+    const hourlyRate = userPlan === "Premium" ? 120 : 50;  
 
-  const wordleStatus = await getWordleStatus(userId);
-  const infoText = 
-      `💳 *Buffer Balance:* \`${balance}\` Buff\n💸 *Cost per hour:* \`${hourlyRate}\` Buff\n\n` +
-    `👤 ***User:*** \`${name}\`\n📋 ***Plan:*** \`${plan}\`\n\n` +
-    `🤖 ***Bot:*** \`Pet_Ai\`\n📊 ***Stats:*** \`${await getUserStats(userId)}\`\n\n` +
-   `🧩 *Today's Wordle:* \`${wordleStatus.text}\` 👉 ${wordleStatus.status === "Verified" ? "✅ Verified" : wordleStatus.status === "Unverified" ? "🕒 Pending" : "❌ Not submitted"}\n\n` +
-    `🧸Status : Active ✅\n\n` +
-    `Submit Daily Wordle for Everyone♥️ use \`/Wordle {the Word}\`\n\n` +
-    `Share🧡: \`https://t.me/ConitioiBot\``;
+    const planRaw = userPlan;  
+    const name = escapeMarkdownV2(nameRaw);  
+    const plan = escapeMarkdownV2(planRaw);  
+    const balance = escapeMarkdownV2(bufferBalance.toString());  
 
-  const keyboard = {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "Terminate", callback_data: "terminate" },
-          { text: "Errors", callback_data: "errors" },
-          { text: "Chat Support 🧸", callback_data: "chat_support" }
-        ],
-        [
-          { text: "Buy Points", callback_data: "buy_points" },
-          { text: "Chat Support 🧸", callback_data: "chat_support" }
-        ]
-      ]
-    },
-    parse_mode: "MarkdownV2"
-  };
+    const wordleStatus = await getWordleStatus(userId);  
+    const infoText =   
+      `💳 *Buffer Balance:* \`${balance}\` Buff\n💸 *Cost per hour:* \`${hourlyRate}\` Buff\n\n` +  
+      `👤 ***User:*** \`${name}\`\n📋 ***Plan:*** \`${plan}\`\n\n` +  
+      `🤖 ***Bot:*** \`Pet_Ai\`\n📊 ***Stats:*** \`${await getUserStats(userId)}\`\n\n` +  
+      `🧩 *Today's Wordle:* \`${wordleStatus.text}\` 👉 ${wordleStatus.status === "Verified" ? "✅ Verified" : wordleStatus.status === "Unverified" ? "🕒 Pending" : "❌ Not submitted"}\n\n` +  
+      `🧸Status : Active ✅\n\n` +  
+      `Submit Daily Wordle with \`/Wordle {the Word}\`\n\n` +  
+      `Share🧡: \`https://t.me/ConitioiBot\``;  
 
-  await bot.sendPhoto(chatId, 'https://ibb.co/d0f0wN4K', {
-    caption: infoText,
-    ...keyboard
-  });
-} else {
-  const balance = escapeMarkdownV2(bufferBalance.toString());
-  const welcomeText =
-    `💳 *Buffer Balance:* \`${balance}\` Buff\n\n` +
-    `🧸*Welcome to Auto Bot ßuffer*\n\nShare🧡  https://t\\.me/ConitioiBot 🐦‍🔥 \n\nChoose bot for automated actions below:`;
+    const keyboard = {  
+      reply_markup: {  
+        inline_keyboard: [  
+          [  
+            { text: "Terminate", callback_data: "terminate" },  
+            { text: "Errors", callback_data: "errors" }  
+          ],  
+          [  
+            { text: "Buy Points", callback_data: "buy_points" },  
+            { text: "Chat Support 🧸", callback_data: "chat_support" }  
+          ]  
+        ]  
+      },  
+      parse_mode: "MarkdownV2"  
+    };  
 
-  const buttons = {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "🐾 Pett_AI", callback_data: "pett_ai" },
-          { text: "🛠️ Vandeski", callback_data: "vandeski" }
-        ],
-        [
-          { text: "Buy Points", callback_data: "buy_points" }
-        ]
-      ]
-    },
-    parse_mode: "MarkdownV2"
-  };
+    await bot.sendPhoto(chatId, 'https://ibb.co/d0f0wN4K', {  
+      caption: infoText,  
+      ...keyboard  
+    });  
 
-  const sentMsg = await bot.sendMessage(chatId, welcomeText, buttons);
-  chatId.lastMessageId = sentMsg.message_id;
-}
-  } catch (err) {
-    console.error("Start Error:", err.message);
-    const sentMsg = await bot.sendMessage(chatId, "⚠️ Something went wrong. Please try again later.");
-    chatId.lastMessageId = sentMsg.message_id;
-  }
+  } catch (err) {  
+    console.error("Start Error:", err.message);  
+    await bot.sendMessage(chatId, "⚠️ Something went wrong. Please try again later.");  
+  }  
 });
 
 bot.onText(/\/wordle (.+)/, async (msg, match) => {
