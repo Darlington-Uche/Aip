@@ -81,26 +81,36 @@ async function saveSessionToDatabase(bot, chatId, session, userId) {
 
 async function getUserStats(userId) {
   try {
+    console.log("[getUserStats] Fetching stats for user:", userId);
+
     const res = await axios.post(`${SERVER}/getUserStats`, {
       user_id: userId.toString()
     });
 
+    console.log("[getUserStats] Raw response:", res.data);
+
     const stats = res.data;
+
     if (stats) {
-      return `
-🧼 : ${stats.clean || 0}% ⚡ : ${stats.energy || 0}% 😊 : ${stats.happiness || 0}%
-♥️ : ${stats.health || 0}% 🍗 : ${stats.hunger || 0}%
+      const result =
+        `🧼: ${stats.clean || 0}%\n` +
+        `⚡: ${stats.energy || 0}%\n` +
+        `😊: ${stats.happiness || 0}%\n` +
+        `♥️: ${stats.health || 0}%\n` +
+        `🍗: ${stats.hunger || 0}%\n\n` +
+        `🏠 Location: ${stats.in_bedroom ? "Bedroom 🛏️" : "Exploring 🌍"}\n` +
+        `💤 Status: ${stats.is_sleeping ? "Sleeping 😴" : "Awake 🐇"}\n` +
+        `🔄 Last Updated: ${new Date(stats.updatedAt).toLocaleTimeString()}`;
 
-🏠 Location: ${stats.in_bedroom ? 'Bedroom 🛏️' : 'Exploring 🌍'}
-
-💤 Status: ${stats.is_sleeping ? 'Sleeping 😴' : 'Awake 🐇'}
-
-🔄 Last Updated: ${new Date(stats.updatedAt).toLocaleTimeString()}
-      `.trim();
+      console.log("[getUserStats] Final formatted result:", result);
+      return result;
     }
+
+    console.log("[getUserStats] No stats object found for user:", userId);
     return "No pet stats available yet";
+
   } catch (error) {
-    console.error("Error fetching stats:", error);
+    console.error("[getUserStats] Error fetching stats:", error.message);
     return "Failed to load pet stats";
   }
 }
