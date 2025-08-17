@@ -89,33 +89,45 @@ async function getUserStats(userId) {
 
     console.log("[getUserStats] Raw response:", res.data);
 
-    const stats = res.data;
-
-    if (stats) {
-      const result =
-        `🧼: ${stats.clean || 0}%\n` +
-        `⚡: ${stats.energy || 0}%\n` +
-        `😊: ${stats.happiness || 0}%\n` +
-        `♥️: ${stats.health || 0}%\n` +
-        `🍗: ${stats.hunger || 0}%\n\n` +
-        `🏠 Location: ${stats.in_bedroom ? "Bedroom 🛏️" : "Exploring 🌍"}\n` +
-        `💤 Status: ${stats.is_sleeping ? "Sleeping 😴" : "Awake 🐇"}\n` +
-        `🔄 Last Updated: ${new Date(stats.updatedAt).toLocaleTimeString()}`;
-
-      console.log("[getUserStats] Final formatted result:", result);
-      return result;
+    // Check if response contains actual stats data
+    if (!res.data || typeof res.data !== 'object') {
+      console.log("[getUserStats] No valid stats data received");
+      return null;
     }
 
-    console.log("[getUserStats] No stats object found for user:", userId);
-    return "No pet stats available yet";
+    const stats = res.data;
+
+    // Check if we have at least one valid stat value
+    const hasValidStats = ['clean', 'energy', 'happiness', 'health', 'hunger'].some(
+      stat => stats[stat] !== undefined && stats[stat] !== null
+    );
+
+    if (!hasValidStats) {
+      console.log("[getUserStats] No valid stat values found");
+      return null;
+    }
+
+    const result =
+      `🧼: ${stats.clean || 0}%\n` +
+      `⚡: ${stats.energy || 0}%\n` +
+      `😊: ${stats.happiness || 0}%\n` +
+      `♥️: ${stats.health || 0}%\n` +
+      `🍗: ${stats.hunger || 0}%\n\n` +
+      `🏠 Location: ${stats.in_bedroom ? "Bedroom 🛏️" : "Exploring 🌍"}\n` +
+      `💤 Status: ${stats.is_sleeping ? "Sleeping 😴" : "Awake 🐇"}\n` +
+      `🔄 Last Updated: ${stats.updatedAt ? new Date(stats.updatedAt).toLocaleTimeString() : 'Never'}`;
+
+    console.log("[getUserStats] Final formatted result:", result);
+    return result;
 
   } catch (error) {
     console.error("[getUserStats] Error fetching stats:", error.message);
-    return "Failed to load pet stats";
+    return null;
   }
 }
 
-// First, add this helper function to get Wordle status
+
+//ordle status
 async function getWordleStatus(userId) {
   try {
     const res = await axios.post(`${SERVER}/checkWordle`, {
@@ -213,141 +225,8 @@ bot.onText(/\/start/, async (msg) => {
   }
 });
 
-async function getUserStats(userId) {
-  try {
-    console.log("[getUserStats] Fetching stats for user:", userId);
 
-    const res = await axios.post(`${SERVER}/getUserStats`, {
-      user_id: userId.toString()
-    });
 
-    console.log("[getUserStats] Raw response:", res.data);
-
-    // Check if response contains actual stats data
-    if (!res.data || typeof res.data !== 'object') {
-      console.log("[getUserStats] No valid stats data received");
-      return null;
-    }
-
-    const stats = res.data;
-
-    // Check if we have at least one valid stat value
-    const hasValidStats = ['clean', 'energy', 'happiness', 'health', 'hunger'].some(
-      stat => stats[stat] !== undefined && stats[stat] !== null
-    );
-
-    if (!hasValidStats) {
-      console.log("[getUserStats] No valid stat values found");
-      return null;
-    }
-
-    const result =
-      `🧼: ${stats.clean || 0}%\n` +
-      `⚡: ${stats.energy || 0}%\n` +
-      `😊: ${stats.happiness || 0}%\n` +
-      `♥️: ${stats.health || 0}%\n` +
-      `🍗: ${stats.hunger || 0}%\n\n` +
-      `🏠 Location: ${stats.in_bedroom ? "Bedroom 🛏️" : "Exploring 🌍"}\n` +
-      `💤 Status: ${stats.is_sleeping ? "Sleeping 😴" : "Awake 🐇"}\n` +
-      `🔄 Last Updated: ${stats.updatedAt ? new Date(stats.updatedAt).toLocaleTimeString() : 'Never'}`;
-
-    console.log("[getUserStats] Final formatted result:", result);
-    return result;
-
-  } catch (error) {
-    console.error("[getUserStats] Error fetching stats:", error.message);
-    return null;
-  }
-}
-
-async function getUserStats(userId) {
-  try {
-    console.log("[getUserStats] Fetching stats for user:", userId);
-
-    const res = await axios.post(`${SERVER}/getUserStats`, {
-      user_id: userId.toString()
-    });
-
-    console.log("[getUserStats] Raw response:", res.data);
-
-    // Check if response contains actual stats data
-    if (!res.data || typeof res.data !== 'object') {
-      console.log("[getUserStats] No valid stats data received");
-      return null;
-    }
-
-    const stats = res.data;
-
-    // Check if we have at least one valid stat value
-    const hasValidStats = ['clean', 'energy', 'happiness', 'health', 'hunger'].some(
-      stat => stats[stat] !== undefined && stats[stat] !== null
-    );
-
-    if (!hasValidStats) {
-      console.log("[getUserStats] No valid stat values found");
-      return null;
-    }
-
-    const result =
-      `🧼: ${stats.clean || 0}%\n` +
-      `⚡: ${stats.energy || 0}%\n` +
-      `😊: ${stats.happiness || 0}%\n` +
-      `♥️: ${stats.health || 0}%\n` +
-      `🍗: ${stats.hunger || 0}%\n\n` +
-      `🏠 Location: ${stats.in_bedroom ? "Bedroom 🛏️" : "Exploring 🌍"}\n` +
-      `💤 Status: ${stats.is_sleeping ? "Sleeping 😴" : "Awake 🐇"}\n` +
-      `🔄 Last Updated: ${stats.updatedAt ? new Date(stats.updatedAt).toLocaleTimeString() : 'Never'}`;
-
-    console.log("[getUserStats] Final formatted result:", result);
-    return result;
-
-  } catch (error) {
-    console.error("[getUserStats] Error fetching stats:", error.message);
-    return null;
-  }
-}
-
-    const wordleStatus = await getWordleStatus(userId);    
-
-    const asciiArt = "(●   ●)\n   ᴖ";    
-
-    const infoText =    
-      `${asciiArt}\n\n` +    
-      `User: ${name}\n\n` +    
-      `Bot: Pet_Ai\nStats:\n${userStats}\n\n` +    
-      `Today's Wordle: ${wordleStatus.text} 👉 ${    
-        wordleStatus.status === "Verified"    
-          ? "✅ Verified"    
-          : wordleStatus.status === "Unverified"    
-          ? "🕒 Pending"    
-          : "❌ Not submitted"    
-      }\n\n` +    
-      `Status: Active ✅\n\n` +    
-      `Submit Daily Wordle with /Wordle {the Word}\n\n` +    
-      `Share: https://t.me/ConitioiBot`;    
-
-    await bot.sendMessage(chatId, infoText, {    
-      reply_markup: {    
-        inline_keyboard: [    
-          [{ text: "Errors", callback_data: "errors" }],    
-          [{ text: "Support 🧸", callback_data: "chat_support" }]    
-        ]    
-      }    
-    });
-
-  } catch (err) {
-    console.error("Start Error:", err.message);
-    await bot.sendMessage(chatId, "⚠️ Failed to load user stats or user doesn't exist");
-    await bot.sendMessage(chatId, "You Need a pet boss?", {    
-      reply_markup: {    
-        inline_keyboard: [    
-          [{ text: "Grab a Bot 0.5$", callback_data: "grab_bot" }],    
-          [{ text: "Wordle", callback_data: "wordle_submit" }]    
-        ]    
-      }    
-    });
-  }
-});
 bot.onText(/\/wordle (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
