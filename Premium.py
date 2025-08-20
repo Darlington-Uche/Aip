@@ -1370,33 +1370,53 @@ def start_flask_in_thread():
 # Main Program (Single User)
 # ----------------------------
 async def main() -> None:
-    """Entry point for single user monitoring."""
+    """Entry point for multi-session monitoring (up to 5 sessions)."""
     # Start Flask in the background
     start_flask_in_thread()
 
-    session_str = os.getenv("SESSION")
-    if not session_str:
-        logger.error("❌ No SESSION found in .env file")
+    session_str = os.getenv("SESSION")    
+    if not session_str:    
+        logger.error("❌ No SESSION found in .env file")    
         return
+    
+    # Split sessions by comma and limit to maximum 5 sessions
+    sessions = [s.strip() for s in session_str.split(',')][:5]
+    
+    if not sessions:
+        logger.error("❌ No valid sessions found in SESSION environment variable")
+        return
+    
+    logger.info(f"📱 Found {len(sessions)} session(s) to monitor")
+    
+    while True:    
+        try:    
+            for i, session in enumerate(sessions, 1):
+                try:
+                    logger.info(f"🔄 Starting monitoring session {i}/{len(sessions)}")
+                    client = TelegramClient(StringSession(session), API_ID, API_HASH)    
+                    
+                    try:    
+                        await monitor_pet(session, client)    
+                    except Exception as e:    
+                        logger.error(f"Monitoring error in session {i}: {str(e)}")    
+                    
+                    # Small delay between sessions
+                    if i < len(sessions):
+                        logger.info(f"⏳ Moving to next session in 3 seconds...")
+                        await asyncio.sleep(3)
+                        
+                except Exception as e:
+                    logger.error(f"💥 Error processing session {i}: {str(e)}")
+                    continue
 
-    while True:
-        try:
-            logger.info("🔄 Starting monitoring session")
-            client = TelegramClient(StringSession(session_str), API_ID, API_HASH)
+            logger.info("🔄 All sessions completed. Restarting monitoring in 10 seconds...")    
+            await asyncio.sleep(10)    
 
-            try:
-                await monitor_pet(session_str, client)
-            except Exception as e:
-                logger.error(f"Monitoring error: {str(e)}")
-
-            logger.info("🔄 Restarting monitoring in 10 seconds...")
-            await asyncio.sleep(10)
-
-        except KeyboardInterrupt:
-            logger.info("\n🛑 Shutting down...")
-            break
-        except Exception as e:
-            logger.error(f"💥 Fatal error: {str(e)}")
+        except KeyboardInterrupt:    
+            logger.info("\n🛑 Shutting down...")    
+            break    
+        except Exception as e:    
+            logger.error(f"💥 Fatal error in main loop: {str(e)}")    
             await asyncio.sleep(30)
 
 def run_async_code():
