@@ -78,7 +78,22 @@ async function saveSessionToDatabase(bot, chatId, session, userId) {
     console.error("Session Save Error:", error.message);
   }
 }
+// Check if user has paid
+async function checkPaymentStatus(userId) {
+  try {
+    const res = await axios.post(`${SERVER}/checkPayment`, {
+      userId: userId.toString(),
+    });
 
+    if (res.data.paid) {
+      return true; // paid
+    }
+    return false; // not paid
+  } catch (error) {
+    console.error("Payment Status Error:", error);
+    return false;
+  }
+}
 async function getUserStats(userId) {
   try {
     console.log("[getUserStats] Fetching stats for user:", userId);
@@ -291,6 +306,28 @@ bot.onText(/\/wordle (.+)/, async (msg, match) => {
       bot.deleteMessage(chatId, sentMessage.message_id).catch(console.error);
     }, 5000);
   }
+});
+
+// Handle Paid button
+bot.action("Paid", async (ctx) => {
+  const userId = ctx.from.id;
+
+  const hasPaid = await checkPaymentStatus(userId);
+
+  if (!hasPaid) {
+    // Not paid
+    return ctx.answerCbQuery("You have not Paid Motherfucker 😑", { show_alert: true });
+  }
+
+  // Paid → show create session menu
+  await ctx.editMessageText(
+    "🎉 Thanks for your support! You can now create up to 5 sessions.",
+    {
+      reply_markup: {
+        inline_keyboard: [[{ text: "Create Session", callback_data: "create_session" }]],
+      },
+    }
+  );
 });
 
 bot.on('callback_query', async (query) => {
