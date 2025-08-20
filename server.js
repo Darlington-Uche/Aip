@@ -44,6 +44,59 @@ app.post('/saveinfo', async (req, res) => {
   }
 });
 
+app.post("/getSessionCount", async (req, res) => {
+    const { userId } = req.body;
+    
+    if (!userId) {
+        return res.status(400).json({ error: "userId is required" });
+    }
+    
+    try {
+        // This would query your database for the user's session count
+        // For now, we'll return a mock value
+        const count = sessionCounts[userId] || 0;
+        res.json({ count });
+    } catch (err) {
+        console.error("Error getting session count:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+app.post("/incrementSessionCount", async (req, res) => {
+    const { userId } = req.body;
+    
+    if (!userId) {
+        return res.status(400).json({ error: "userId is required" });
+    }
+    
+    try {
+        // This would update your database
+        sessionCounts[userId] = (sessionCounts[userId] || 0) + 1;
+        res.json({ success: true, newCount: sessionCounts[userId] });
+    } catch (err) {
+        console.error("Error incrementing session count:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
+app.post("/resetPaymentStatus", async (req, res) => {
+    const { userId } = req.body;
+    
+    if (!userId) {
+        return res.status(400).json({ error: "userId is required" });
+    }
+    
+    try {
+        // This would update your database to reset payment status
+        // For now, we'll just log it
+        console.log(`Payment status reset for user: ${userId}`);
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Error resetting payment status:", err);
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
 /**
  * Route: /getinfo
  * Method: GET
