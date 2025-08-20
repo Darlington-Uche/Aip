@@ -172,11 +172,13 @@ bot.onText(/\/start/, async (msg) => {
                         !userStats.includes("No pet stats available");
     
     if (!isRegistered) {    
-      await bot.sendMessage(chatId, "You Need a pet boss?", {    
+      await bot.sendMessage(chatId, "You Need a pet bot? open this bot send to the address payment will be confirmed then you can create 5 sessions and if you need help deploying you can join the group or use /help\n\n 
+link 🟣for payment: https://t.me/Insiderrsbro_bot\n
+G👋roup for help : https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t\n\n 
+you can help add submit Wordle for purple bot for users to use using /wordle {the word}.", {    
         reply_markup: {    
           inline_keyboard: [    
-            [{ text: "Grab a Bot 0.5$", callback_data: "grab_bot" }],    
-            [{ text: "Wordle", callback_data: "wordle_submit" }]    
+            [{ text: "Paid ✅", callback_data: "Paid" }]   
           ]    
         }    
       });    
@@ -206,7 +208,7 @@ bot.onText(/\/start/, async (msg) => {
       reply_markup: {    
         inline_keyboard: [    
           [{ text: "Errors", callback_data: "errors" }],    
-          [{ text: "Support 🧸", callback_data: "chat_support" }]    
+          [{ text: "Support 🧸 n Help", callback_data: "chat_support" }]    
         ]    
       }    
     });
@@ -214,11 +216,13 @@ bot.onText(/\/start/, async (msg) => {
   } catch (err) {
     console.error("Start Error:", err.message);
     await bot.sendMessage(chatId, "⚠️ Failed to load user stats");
-    await bot.sendMessage(chatId, "You Need a pet boss?", {    
+    await bot.sendMessage(chatId, "You Need a pet bot? open this bot send to the address payment will be confirmed then you can create 5 sessions and if you need help deploying you can join the group or use /help\n\n 
+link 🟣for payment: https://t.me/Insiderrsbro_bot\n
+G👋roup for help : https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t\n\n 
+you can help add submit Wordle for purple bot for users to use using /wordle {the word}.", {    
       reply_markup: {    
         inline_keyboard: [    
-          [{ text: "Grab a Bot 0.5$", callback_data: "grab_bot" }],    
-          [{ text: "Wordle", callback_data: "wordle_submit" }]    
+          [{ text: "Paid✅", callback_data: "Paid" }]    
         ]    
       }    
     });
