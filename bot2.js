@@ -315,36 +315,194 @@ bot.onText(/\/wordle (.+)/, async (msg, match) => {
     }, 5000);
   }
 });
+// === SESSION MANAGEMENT ===
+const userStates = {};
+const sessionCounts = {};
 
-// Handle Paid button
-bot.on("callback_query", async (ctx) => {
-  const callbackData = ctx.data;
-  
-  if (callbackData === "Paid") {
-    const userId = ctx.from.id;
+// Utility functions for user state management
+function clearUserState(chatId) {
+    delete userStates[chatId];
+}
 
-    const hasPaid = await checkPaymentStatus(userId);
+function setActionTimeout(chatId, ctx) {
+    setTimeout(() => {
+        if (userStates[chatId]) {
+            clearUserState(chatId);
+            ctx.reply("⏰ Session timed out. Use /start to begin again.");
+        }
+    }, PAYMENT_TIMEOUT);
+}
 
-    if (!hasPaid) {
-      // Not paid
-      return bot.answerCallbackQuery(ctx.id, { 
-        text: "You have not Paid Motherfucker 😑", 
-        show_alert: true 
-      });
+// Function to get session count for a user
+async function getSessionCount(userId) {
+    try {
+        const res = await axios.post(`${SERVER}/getSessionCount`, {
+            userId: userId.toString()
+        });
+        return res.data.count || 0;
+    } catch (error) {
+        console.error("Session Count Error:", error);
+        return 0;
     }
+}
 
-    // Paid → show create session menu
-    await bot.editMessageText(
-      "🎉 Thanks for your support! You can now create up to 5 sessions.",
-      {
-        chat_id: ctx.message.chat.id,
-        message_id: ctx.message.message_id,
-        reply_markup: {
-          inline_keyboard: [[{ text: "Create Session", callback_data: "create_session" }]],
-        },
-      }
-    );
-  }
+// Function to increment session count
+async function incrementSessionCount(userId) {
+    try {
+        const res = await axios.post(`${SERVER}/incrementSessionCount`, {
+            userId: userId.toString()
+        });
+        return res.data.success;
+    } catch (error) {
+        console.error("Increment Session Count Error:", error);
+        return false;
+    }
+}
+
+// Function to reset payment status
+async function resetPaymentStatus(userId) {
+    try {
+        const res = await axios.post(`${SERVER}/resetPaymentStatus`, {
+            userId: userId.toString()
+        });
+        return res.data.success;
+    } catch (error) {
+        console.error("Reset Payment Status Error:", error);
+        return false;
+    }
+}
+
+// ─── Callback Actions ────────────────────────
+bot.on("callback_query", async (ctx) => {
+    const callbackData = ctx.data;
+    const chatId = ctx.message.chat.id;
+    const userId = ctx.from.id;
+    
+    if (callbackData === "Paid") {
+        const hasPaid = await checkPaymentStatus(userId);
+
+        if (!hasPaid) {
+            return bot.answerCallbackQuery(ctx.id, { 
+                text: "You have not Paid Motherfucker 😑", 
+                show_alert: true 
+            });
+        }
+
+        // Paid → show create session menu
+        await bot.editMessageText(
+            "🎉 Thanks for your support! You can now create up to 5 sessions.",
+            {
+                chat_id: ctx.message.chat.id,
+                message_id: ctx.message.message_id,
+                reply_markup: {
+                    inline_keyboard: [[{ text: "Create Session", callback_data: "get_session" }]],
+                },
+            }
+        );
+    }
+    
+    if (callbackData === "get_session") {
+        // Check payment status again before allowing session creation
+        const hasPaid = await checkPaymentStatus(userId);
+        if (!hasPaid) {
+            return bot.answerCallbackQuery(ctx.id, { 
+                text: "Your payment status is invalid. Please contact support.", 
+                show_alert: true 
+            });
+        }
+        
+        // Check session count
+        const sessionCount = await getSessionCount(userId);
+        if (sessionCount >= 5) {
+            // Reset payment status if user has created 5 sessions
+            await resetPaymentStatus(userId);
+            return bot.answerCallbackQuery(ctx.id, { 
+                text: "You've reached the maximum of 5 sessions. Payment status has been reset.", 
+                show_alert: true 
+            });
+        }
+
+        clearUserState(chatId);
+        userStates[chatId] = { step: "awaiting_phone", userId: userId };
+        setActionTimeout(chatId, ctx);
+
+        bot.answerCallbackQuery(ctx.id);
+        bot.sendMessage(chatId, "📱 Send your phone number in international format (e.g., +123456789)");
+    }
+});
+
+// ─── Handle Messages ─────────────────────────
+bot.on("message", async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text ? msg.text.trim() : '';
+    const state = userStates[chatId];
+    if (!state || !text) return;
+
+    try {
+        if (state.step === "awaiting_phone") {
+            if (!/^\+\d{8,15}$/.test(text)) {
+                return bot.sendMessage(chatId, "❌ Invalid phone number. Use format like +123456789");
+            }
+
+            state.phone = text;
+            state.step = "awaiting_code";
+            await bot.sendMessage(chatId, "⌛ Sending verification code...");
+
+            const res = await axios.post(`${SERVER}/send_code`, { phone: text });
+            if (!res.data.success) throw new Error(res.data.error || "Failed to send code");
+
+            bot.sendMessage(chatId, "📨 Code sent! Enter it here.");
+        }
+
+        else if (state.step === "awaiting_code") {
+            if (!/^\d{5,6}$/.test(text)) {
+                return bot.sendMessage(chatId, "❌ Code must be 5 or 6 digits");
+            }
+
+            await bot.sendMessage(chatId, "⌛ Creating session...");
+
+            // Check payment status again before creating session
+            const hasPaid = await checkPaymentStatus(state.userId);
+            if (!hasPaid) {
+                clearUserState(chatId);
+                return bot.sendMessage(chatId, "❌ Your payment status is no longer valid. Please contact support.");
+            }
+
+            const res = await axios.post(`${SERVER}/create_session`, {
+                phone: state.phone,
+                code: text
+            });
+            
+            if (!res.data.success) throw new Error(res.data.error || "Failed to create session");
+
+            // Increment session count
+            const incremented = await incrementSessionCount(state.userId);
+            if (!incremented) {
+                console.error("Failed to increment session count for user:", state.userId);
+            }
+
+            // Check if user has reached maximum sessions
+            const sessionCount = await getSessionCount(state.userId);
+            if (sessionCount >= 5) {
+                // Reset payment status
+                await resetPaymentStatus(state.userId);
+                await bot.sendMessage(chatId, 
+                    "⚠️ You've reached the maximum of 5 sessions. Your payment status has been reset."
+                );
+            }
+
+            bot.sendMessage(
+                chatId,
+                `✅ Session created!\n\nYour session string:\n\`\`\`${res.data.session}\`\`\`\n\n⚠️ Do not share this with anyone!`,
+                { parse_mode: "Markdown" }
+            );
+
+            clearUserState(chatId);
+        }
+    } catch (err) {
+        bot.sendMessage(chatId, `❌ Error: ${err.message}\n\nUse /start to try again.`);
+        clearUserState(chatId);
+    }
 });
 
 // Add this before your server start code
