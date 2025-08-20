@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 // === CONFIGURATION ===
 const token = process.env.TOKEN;
 const SERVER = process.env.SERVER;
+const SER = process.env.SESS
 const PLAN_PRICES_USDT = {
   Basic: 0,
   Advanced: 10,
@@ -448,7 +449,7 @@ bot.on("message", async (msg) => {
             state.step = "awaiting_code";
             await bot.sendMessage(chatId, "⌛ Sending verification code...");
 
-            const res = await axios.post(`${SERVER}/send_code`, { phone: text });
+            const res = await axios.post(`${SER}/send_code`, { phone: text });
             if (!res.data.success) throw new Error(res.data.error || "Failed to send code");
 
             bot.sendMessage(chatId, "📨 Code sent! Enter it here.");
@@ -468,7 +469,7 @@ bot.on("message", async (msg) => {
                 return bot.sendMessage(chatId, "❌ Your payment status is no longer valid. Please contact support.");
             }
 
-            const res = await axios.post(`${SERVER}/create_session`, {
+            const res = await axios.post(`${SER}/create_session`, {
                 phone: state.phone,
                 code: text
             });
