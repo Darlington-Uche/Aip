@@ -175,6 +175,29 @@ app.post('/getUserErrors', async (req, res) => {
     });
   }
 });
+// Route: /checkPayment
+// Method: POST
+// Description: Check if user has paid
+app.post("/checkPayment", async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: "userId is required" });
+  }
+
+  try {
+    const paymentDoc = await db.collection("payments").doc(String(userId)).get();
+
+    if (paymentDoc.exists && paymentDoc.data().status === "paid") {
+      return res.json({ paid: true });
+    }
+
+    return res.json({ paid: false });
+  } catch (err) {
+    console.error("Error checking payment:", err);
+    return res.status(500).json({ paid: false, error: "Server error" });
+  }
+});
 
 // Route: /getUserStats
 // Method: POST
