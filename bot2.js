@@ -187,18 +187,24 @@ bot.onText(/\/start/, async (msg) => {
                         !userStats.includes("No pet stats available");
     
     if (!isRegistered) {    
-      await bot.sendMessage(chatId, "You Need a pet bot? open this bot send to the address payment will be confirmed then you can create 5 sessions and if you need help deploying you can join the group or use /help\n\n 
-link 🟣for payment: https://t.me/Insiderrsbro_bot\n
-G👋roup for help : https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t\n\n 
-you can help add submit Wordle for purple bot for users to use using /wordle {the word}.", {    
-        reply_markup: {    
-          inline_keyboard: [    
-            [{ text: "Paid ✅", callback_data: "Paid" }]   
-          ]    
-        }    
-      });    
-      return;    
+  await bot.sendMessage(chatId, 
+    `You Need a pet bot? open this bot send to the address payment will be confirmed then you can create 5 sessions and if you need help deploying you can join the group or use /help
+
+🟣 Link for payment: https://t.me/Insiderrsbro_bot
+👋 Group for help : https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t
+
+You can also help add and submit Wordle for Purple Bot for users to use with:
+👉 /wordle {the word}`, 
+    {    
+      reply_markup: {    
+        inline_keyboard: [    
+          [{ text: "Paid ✅", callback_data: "Paid" }]   
+        ]    
+      }    
     }
+  );    
+  return;    
+}
 
     // Only show dashboard if we have valid stats
     const wordleStatus = await getWordleStatus(userId);    
@@ -230,19 +236,28 @@ you can help add submit Wordle for purple bot for users to use using /wordle {th
 
   } catch (err) {
     console.error("Start Error:", err.message);
-    await bot.sendMessage(chatId, "⚠️ Failed to load user stats");
-    await bot.sendMessage(chatId, "You Need a pet bot? open this bot send to the address payment will be confirmed then you can create 5 sessions and if you need help deploying you can join the group or use /help\n\n 
-link 🟣for payment: https://t.me/Insiderrsbro_bot\n
-G👋roup for help : https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t\n\n 
-you can help add submit Wordle for purple bot for users to use using /wordle {the word}.", {    
-      reply_markup: {    
-        inline_keyboard: [    
-          [{ text: "Paid✅", callback_data: "Paid" }]    
-        ]    
-      }    
-    });
+await bot.sendMessage(chatId, "⚠️ Failed to load user stats");
+
+await bot.sendMessage(
+  chatId,
+  `You Need a pet bot? Open this bot, send to the address, payment will be confirmed. 
+Then you can create 5 sessions.  
+
+If you need help deploying, you can join the group or use /help.
+
+🟣 Link for payment: https://t.me/Insiderrsbro_bot  
+👋 Group for help: https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t  
+
+You can also help add and submit Wordle for Purple Bot using:  
+👉 /wordle {the word}`,
+  {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "Paid ✅", callback_data: "Paid" }]
+      ]
+    }
   }
-});
+);
 
 
 
