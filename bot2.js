@@ -18,10 +18,8 @@ const PAYMENT_TIMEOUT = 15 * 60 * 1000;
 const bot = new TelegramBot(token);
 const app = express();
 app.use(bodyParser.json());
-const WEBHOOK_URL = process.env.WEBHOOK
+const WEBHOOK_URL = process.env.WEBHOOK;
 bot.setWebHook(`${WEBHOOK_URL}/bot${token}`);
-
-
 
 // === UTILITY FUNCTIONS ===
 function delay(ms) {
@@ -29,7 +27,7 @@ function delay(ms) {
 }
 
 function escapeMarkdownV2(text) {
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+  return text.replace(/[_*[]()~`>#+-=|{}.!\]/g, '\\$&');
 }
 
 // === WEBHOOK HANDLER ===
@@ -78,6 +76,7 @@ async function saveSessionToDatabase(bot, chatId, session, userId) {
     console.error("Session Save Error:", error.message);
   }
 }
+
 // Check if user has paid
 async function checkPaymentStatus(userId) {
   try {
@@ -85,79 +84,78 @@ async function checkPaymentStatus(userId) {
       userId: userId.toString(),
     });
 
-    if (res.data.paid) {
-      return true; // paid
-    }
+    if (res.data.paid) {  
+      return true; // paid  
+    }  
     return false; // not paid
   } catch (error) {
     console.error("Payment Status Error:", error);
     return false;
   }
 }
+
 async function getUserStats(userId) {
   try {
     console.log("[getUserStats] Fetching stats for user:", userId);
 
-    const res = await axios.post(`${SERVER}/getUserStats`, {
-      user_id: userId.toString()
-    });
+    const res = await axios.post(`${SERVER}/getUserStats`, {  
+      user_id: userId.toString()  
+    });  
 
-    console.log("[getUserStats] Raw response:", res.data);
+    console.log("[getUserStats] Raw response:", res.data);  
 
-    // Check if response contains actual stats data
-    if (!res.data || typeof res.data !== 'object') {
-      console.log("[getUserStats] No valid stats data received");
-      return null;
-    }
+    // Check if response contains actual stats data  
+    if (!res.data || typeof res.data !== 'object') {  
+      console.log("[getUserStats] No valid stats data received");  
+      return null;  
+    }  
 
-    const stats = res.data;
+    const stats = res.data;  
 
-    // Check if we have at least one valid stat value
-    const hasValidStats = ['clean', 'energy', 'happiness', 'health', 'hunger'].some(
-      stat => stats[stat] !== undefined && stats[stat] !== null
-    );
+    // Check if we have at least one valid stat value  
+    const hasValidStats = ['clean', 'energy', 'happiness', 'health', 'hunger'].some(  
+      stat => stats[stat] !== undefined && stats[stat] !== null  
+    );  
 
-    if (!hasValidStats) {
-      console.log("[getUserStats] No valid stat values found");
-      return null;
-    }
+    if (!hasValidStats) {  
+      console.log("[getUserStats] No valid stat values found");  
+      return null;  
+    }  
 
-    const result =
-      `🧼: ${stats.clean || 0}%\n` +
-      `⚡: ${stats.energy || 0}%\n` +
-      `😊: ${stats.happiness || 0}%\n` +
-      `♥️: ${stats.health || 0}%\n` +
-      `🍗: ${stats.hunger || 0}%\n\n` +
-      `🏠 Location: ${stats.in_bedroom ? "Bedroom 🛏️" : "Exploring 🌍"}\n` +
-      `💤 Status: ${stats.is_sleeping ? "Sleeping 😴" : "Awake 🐇"}\n` +
-      `🔄 Last Updated: ${stats.updatedAt ? new Date(stats.updatedAt).toLocaleTimeString() : 'Never'}`;
+    const result =  
+      `🧼: ${stats.clean || 0}%\n` +  
+      `⚡: ${stats.energy || 0}%\n` +  
+      `😊: ${stats.happiness || 0}%\n` +  
+      `♥️: ${stats.health || 0}%\n` +  
+      `🍗: ${stats.hunger || 0}%\n\n` +  
+      `🏠 Location: ${stats.in_bedroom ? "Bedroom 🛏️" : "Exploring 🌍"}\n` +  
+      `💤 Status: ${stats.is_sleeping ? "Sleeping 😴" : "Awake 🐇"}\n` +  
+      `🔄 Last Updated: ${stats.updatedAt ? new Date(stats.updatedAt).toLocaleTimeString() : 'Never'}`;  
 
-    console.log("[getUserStats] Final formatted result:", result);
+    console.log("[getUserStats] Final formatted result:", result);  
     return result;
-
   } catch (error) {
     console.error("[getUserStats] Error fetching stats:", error.message);
     return null;
   }
 }
 
-
-//ordle status
+// Wordle status
 async function getWordleStatus(userId) {
   try {
     const res = await axios.post(`${SERVER}/checkWordle`, {
       userId: userId.toString()
     });
-    
-    if (res.data.exists) {
-      return {
-        text: res.data.wordle.wordle,
-        status: res.data.wordle.status
-      };
-    }
-    return {
-      text: "Not submitted yet",
-      status: "None"
+
+    if (res.data.exists) {  
+      return {  
+        text: res.data.wordle.wordle,  
+        status: res.data.wordle.status  
+      };  
+    }  
+    return {  
+      text: "Not submitted yet",  
+      status: "None"  
     };
   } catch (error) {
     console.error("Wordle Status Error:", error);
@@ -168,100 +166,94 @@ async function getWordleStatus(userId) {
   }
 }
 
-
 // === MESSAGE HANDLERS ===
-// === MESSAGE HANDLERS ===  
-// === MESSAGE HANDLERS ===  
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const name = msg.from.username || msg.from.first_name || "User";
 
   try {
-    // Fetch stats    
+    // Fetch stats
     const userStats = await getUserStats(userId);
-    
-    // Check if stats exist and are valid (not empty or error messages)
+
+    // Check if stats exist and are valid (not empty or error messages)  
     const isRegistered = userStats && 
                         !userStats.includes("Failed to load") && 
-                        !userStats.includes("No pet stats available");
-    
-    if (!isRegistered) {    
-  await bot.sendMessage(chatId, 
-    `You Need a pet bot? open this bot send to the address payment will be confirmed then you can create 5 sessions and if you need help deploying you can join the group or use /help
+                        !userStats.includes("No pet stats available");  
+
+    if (!isRegistered) {
+      await bot.sendMessage(chatId,
+        `You Need a pet bot? open this bot send to the address payment will be confirmed then you can create 5 sessions and if you need help deploying you can join the group or use /help
 
 🟣 Link for payment: https://t.me/Insiderrsbro_bot
 👋 Group for help : https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t
 
 You can also help add and submit Wordle for Purple Bot for users to use with:
-👉 /wordle {the word}`, 
-    {    
-      reply_markup: {    
-        inline_keyboard: [    
-          [{ text: "Paid ✅", callback_data: "Paid" }]   
-        ]    
-      }    
+👉 /wordle {the word}`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "Paid ✅", callback_data: "Paid" }]
+            ]
+          }
+        }
+      );
+      return;
     }
-  );    
-  return;    
-}
 
-    // Only show dashboard if we have valid stats
-    const wordleStatus = await getWordleStatus(userId);    
-    const asciiArt = "(●   ●)\n   ᴖ";    
+    // Only show dashboard if we have valid stats  
+    const wordleStatus = await getWordleStatus(userId);      
+    const asciiArt = "(●   ●)\n   ᴖ";      
 
-    const infoText =    
-      `${asciiArt}\n\n` +    
-      `User: ${name}\n\n` +    
-      `Bot: Pet_Ai\nStats:\n${userStats}\n\n` +    
-      `Today's Wordle: ${wordleStatus.text} 👉 ${    
-        wordleStatus.status === "Verified"    
-          ? "✅ Verified"    
-          : wordleStatus.status === "Unverified"    
-          ? "🕒 Pending"    
-          : "❌ Not submitted"    
-      }\n\n` +    
-      `Status: Active ✅\n\n` +    
-      `Submit Daily Wordle with /Wordle {the Word}\n\n` +    
-      `Share: https://t.me/ConitioiBot`;    
+    const infoText =      
+      `${asciiArt}\n\n` +      
+      `User: ${name}\n\n` +      
+      `Bot: Pet_Ai\nStats:\n${userStats}\n\n` +      
+      `Today's Wordle: ${wordleStatus.text} 👉 ${      
+        wordleStatus.status === "Verified"      
+          ? "✅ Verified"      
+          : wordleStatus.status === "Unverified"      
+          ? "🕒 Pending"      
+          : "❌ Not submitted"      
+      }\n\n` +      
+      `Status: Active ✅\n\n` +      
+      `Submit Daily Wordle with /Wordle {the Word}\n\n` +      
+      `Share: https://t.me/ConitioiBot`;      
 
-    await bot.sendMessage(chatId, infoText, {    
-      reply_markup: {    
-        inline_keyboard: [    
-          [{ text: "Errors", callback_data: "errors" }],    
-          [{ text: "Support 🧸 n Help", callback_data: "chat_support" }]    
-        ]    
-      }    
+    await bot.sendMessage(chatId, infoText, {      
+      reply_markup: {      
+        inline_keyboard: [      
+          [{ text: "Errors", callback_data: "errors" }],      
+          [{ text: "Support 🧸 n Help", callback_data: "chat_support" }]      
+        ]      
+      }      
     });
-
   } catch (err) {
     console.error("Start Error:", err.message);
-await bot.sendMessage(chatId, "⚠️ Failed to load user stats");
+    await bot.sendMessage(chatId, "⚠️ Failed to load user stats");
 
-await bot.sendMessage(
-  chatId,
-  `You Need a pet bot? Open this bot, send to the address, payment will be confirmed. 
-Then you can create 5 sessions.  
+    await bot.sendMessage(
+      chatId,
+      `You Need a pet bot? Open this bot, send to the address, payment will be confirmed.
+Then you can create 5 sessions.
 
 If you need help deploying, you can join the group or use /help.
 
-🟣 Link for payment: https://t.me/Insiderrsbro_bot  
-👋 Group for help: https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t  
+🟣 Link for payment: https://t.me/Insiderrsbro_bot
+👋 Group for help: https://chat.whatsapp.com/IYxW7sRLQcz7NnLHLBaowl?mode=ac_t
 
-You can also help add and submit Wordle for Purple Bot using:  
+You can also help add and submit Wordle for Purple Bot using:
 👉 /wordle {the word}`,
-  {
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "Paid ✅", callback_data: "Paid" }]
-      ]
-    }
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "Paid ✅", callback_data: "Paid" }]
+          ]
+        }
+      }
+    );
   }
-);
-}
 });
-
-
 
 bot.onText(/\/wordle (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
@@ -274,79 +266,86 @@ bot.onText(/\/wordle (.+)/, async (msg, match) => {
       userId: userId.toString()
     });
 
-    if (checkResponse.data.exists) {
-      const existingWordle = checkResponse.data.wordle;
-      const sentMessage = await bot.sendMessage(chatId, 
-        `🧩 *Wordle Update* 🧩\n\n` +
-        `Someone has uploaded today's Wordle and it's *${existingWordle.status}*\n\n` +
-        `Check back later 😇\n` +
-        `More rewards coming soon! 🧸✨`,
-        { parse_mode: "Markdown" }
-      );
-      
-      // Delete after 5 seconds
-      setTimeout(() => {
-        bot.deleteMessage(chatId, sentMessage.message_id).catch(console.error);
-      }, 5000);
-      return;
-    }
+    if (checkResponse.data.exists) {  
+      const existingWordle = checkResponse.data.wordle;  
+      const sentMessage = await bot.sendMessage(chatId,   
+        `🧩 *Wordle Update* 🧩\n\n` +  
+        `Someone has uploaded today's Wordle and it's *${existingWordle.status}*\n\n` +  
+        `Check back later 😇\n` +  
+        `More rewards coming soon! 🧸✨`,  
+        { parse_mode: "Markdown" }  
+      );  
 
-    // Save new Wordle
-    const saveResponse = await axios.post(`${SERVER}/saveWordle`, {
-      userId: userId.toString(),
-      wordle: wordleText,
-      status: "Unverified"
-    });
+      // Delete after 5 seconds  
+      setTimeout(() => {  
+        bot.deleteMessage(chatId, sentMessage.message_id).catch(console.error);  
+      }, 5000);  
+      return;  
+    }  
 
-    const sentMessage = await bot.sendMessage(chatId,
-      `🎯 *Wordle Submitted Successfully!* 🎯\n\n` +
-      `✅ You've uploaded today's Wordle!\n\n` +
-      `🔍 Once verified, your rewards are *guaranteed*!\n` +
-      `🕒 Check back later for your rewards! 🎉`,
-      { parse_mode: "Markdown" }
-    );
+    // Save new Wordle  
+    const saveResponse = await axios.post(`${SERVER}/saveWordle`, {  
+      userId: userId.toString(),  
+      wordle: wordleText,  
+      status: "Unverified"  
+    });  
 
-    // Delete after 5 seconds
-    setTimeout(() => {
-      bot.deleteMessage(chatId, sentMessage.message_id).catch(console.error);
+    const sentMessage = await bot.sendMessage(chatId,  
+      `🎯 *Wordle Submitted Successfully!* 🎯\n\n` +  
+      `✅ You've uploaded today's Wordle!\n\n` +  
+      `🔍 Once verified, your rewards are *guaranteed*!\n` +  
+      `🕒 Check back later for your rewards! 🎉`,  
+      { parse_mode: "Markdown" }  
+    );  
+
+    // Delete after 5 seconds  
+    setTimeout(() => {  
+      bot.deleteMessage(chatId, sentMessage.message_id).catch(console.error);  
     }, 5000);
-
   } catch (error) {
     console.error("Wordle Error:", error);
-    const sentMessage = await bot.sendMessage(chatId, 
+    const sentMessage = await bot.sendMessage(chatId,
       "⚠️ Failed to process your Wordle. Please try again later.",
       { parse_mode: "Markdown" }
     );
-    
-    // Delete after 5 seconds
-    setTimeout(() => {
-      bot.deleteMessage(chatId, sentMessage.message_id).catch(console.error);
+
+    // Delete after 5 seconds  
+    setTimeout(() => {  
+      bot.deleteMessage(chatId, sentMessage.message_id).catch(console.error);  
     }, 5000);
   }
 });
 
 // Handle Paid button
-bot.action("Paid", async (ctx) => {
-  const userId = ctx.from.id;
+bot.on("callback_query", async (ctx) => {
+  const callbackData = ctx.data;
+  
+  if (callbackData === "Paid") {
+    const userId = ctx.from.id;
 
-  const hasPaid = await checkPaymentStatus(userId);
+    const hasPaid = await checkPaymentStatus(userId);
 
-  if (!hasPaid) {
-    // Not paid
-    return ctx.answerCbQuery("You have not Paid Motherfucker 😑", { show_alert: true });
-  }
-
-  // Paid → show create session menu
-  await ctx.editMessageText(
-    "🎉 Thanks for your support! You can now create up to 5 sessions.",
-    {
-      reply_markup: {
-        inline_keyboard: [[{ text: "Create Session", callback_data: "create_session" }]],
-      },
+    if (!hasPaid) {
+      // Not paid
+      return bot.answerCallbackQuery(ctx.id, { 
+        text: "You have not Paid Motherfucker 😑", 
+        show_alert: true 
+      });
     }
-  );
-});
 
+    // Paid → show create session menu
+    await bot.editMessageText(
+      "🎉 Thanks for your support! You can now create up to 5 sessions.",
+      {
+        chat_id: ctx.message.chat.id,
+        message_id: ctx.message.message_id,
+        reply_markup: {
+          inline_keyboard: [[{ text: "Create Session", callback_data: "create_session" }]],
+        },
+      }
+    );
+  }
+});
 
 // Add this before your server start code
 app.get('/health', (req, res) => {
@@ -355,11 +354,6 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
   });
-});
-
-// === SERVER START ===
-app.listen(3000, () => {
-  console.log("Webhook server running on port 3000");
 });
 
 // === SERVER START ===
