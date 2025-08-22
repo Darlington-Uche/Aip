@@ -1369,55 +1369,42 @@ def start_flask_in_thread():
 # ----------------------------
 # Main Program (Single User)
 # ----------------------------
+# ----------------------------
+# Main Program (Multi-User, Parallel)
+# ----------------------------
 async def main() -> None:
-    """Entry point for multi-session monitoring (up to 5 sessions)."""
+    """Entry point for multi-session monitoring (runs all sessions in parallel)."""
     # Start Flask in the background
     start_flask_in_thread()
 
-    session_str = os.getenv("SESSION")    
-    if not session_str:    
-        logger.error("❌ No SESSION found in .env file")    
+    session_str = os.getenv("SESSION")
+    if not session_str:
+        logger.error("❌ No SESSION found in .env file")
         return
-    
+
     # Split sessions by comma and limit to maximum 5 sessions
     sessions = [s.strip() for s in session_str.split(',')][:5]
-    
+
     if not sessions:
         logger.error("❌ No valid sessions found in SESSION environment variable")
         return
-    
+
     logger.info(f"📱 Found {len(sessions)} session(s) to monitor")
-    
-    while True:    
-        try:    
-            for i, session in enumerate(sessions, 1):
-                try:
-                    logger.info(f"🔄 Starting monitoring session {i}/{len(sessions)}")
-                    client = TelegramClient(StringSession(session), API_ID, API_HASH)    
-                    
-                    try:    
-                        await monitor_pet(session, client)    
-                    except Exception as e:    
-                        logger.error(f"Monitoring error in session {i}: {str(e)}")    
-                    
-                    # Small delay between sessions
-                    if i < len(sessions):
-                        logger.info(f"⏳ Moving to next session in 3 seconds...")
-                        await asyncio.sleep(3)
-                        
-                except Exception as e:
-                    logger.error(f"💥 Error processing session {i}: {str(e)}")
-                    continue
 
-            logger.info("🔄 All sessions completed. Restarting monitoring in 10 seconds...")    
-            await asyncio.sleep(10)    
+    tasks = []
+    for i, session in enumerate(sessions, 1):
+        try:
+            client = TelegramClient(StringSession(session), API_ID, API_HASH)
+            logger.info(f"🔄 Starting monitoring session {i}/{len(sessions)}")
+            tasks.append(monitor_pet(session, client))
+        except Exception as e:
+            logger.error(f"💥 Failed to start session {i}: {str(e)}")
 
-        except KeyboardInterrupt:    
-            logger.info("\n🛑 Shutting down...")    
-            break    
-        except Exception as e:    
-            logger.error(f"💥 Fatal error in main loop: {str(e)}")    
-            await asyncio.sleep(30)
+    if tasks:
+        # Run all sessions concurrently
+        await asyncio.gather(*tasks)
+    else:
+        logger.error("❌ No valid monitoring tasks could be started")
 
 def run_async_code():
     """Wrapper that restarts the asyncio loop if it fails."""
