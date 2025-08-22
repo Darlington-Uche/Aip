@@ -462,13 +462,6 @@ bot.on("message", async (msg) => {
 
             await bot.sendMessage(chatId, "⌛ Creating session...");
 
-            // Check payment status again before creating session
-            const hasPaid = await checkPaymentStatus(state.userId);
-            if (!hasPaid) {
-                clearUserState(chatId);
-                return bot.sendMessage(chatId, "❌ Your payment status is no longer valid. Please contact support.");
-            }
-
             const res = await axios.post(`${SER}/create_session`, {
                 phone: state.phone,
                 code: text
