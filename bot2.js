@@ -466,10 +466,23 @@ bot.on("message", async (msg) => {
                 phone: state.phone,
                 code: text
             });
-            
+
             if (!res.data.success) throw new Error(res.data.error || "Failed to create session");
-//save to Db 
-await saveSessionToDatabase(bot, chatId, res.data.session, state.userId);
+
+            // 🔎 Check server session count before saving
+            const infoRes = await axios.get(`${SERVER}/getinfo`);
+            if (infoRes.data.length >= 10) {
+                await bot.sendMessage(
+                    chatId,
+                    "⚠️ Your session could not be saved because the server has reached maximum participants (10).\n\n" +
+                    "An upgrade will be made and you will be notified."
+                );
+                clearUserState(chatId);
+                return;
+            }
+
+            // ✅ Save to DB since limit not reached
+            await saveSessionToDatabase(bot, chatId, res.data.session, state.userId);
 
             // Increment session count
             const incremented = await incrementSessionCount(state.userId);
@@ -477,7 +490,7 @@ await saveSessionToDatabase(bot, chatId, res.data.session, state.userId);
                 console.error("Failed to increment session count for user:", state.userId);
             }
 
-            // Check if user has reached maximum sessions
+            // Check if user has reached maximum sessions (5 per user)
             const sessionCount = await getSessionCount(state.userId);
             if (sessionCount >= 5) {
                 // Reset payment status
@@ -487,10 +500,12 @@ await saveSessionToDatabase(bot, chatId, res.data.session, state.userId);
                 );
             }
 
+            // 🎉 Final success message (no session string shown)
             bot.sendMessage(
                 chatId,
-                `✅ Session created!\n\nYour session string:\n\`\`\`${res.data.session}\`\`\`\n\n⚠️ Do not share this with anyone!`,
-                { parse_mode: "Markdown" }
+                "✅ You have successfully created a session!\n\n" +
+                "👉 Open this bot with the number you just created the session with to view your pet stats.\n\n" +
+                "⏳ If stats are not yet displaying, please wait up to 5 minutes."
             );
 
             clearUserState(chatId);
