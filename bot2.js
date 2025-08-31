@@ -468,6 +468,8 @@ bot.on("message", async (msg) => {
             });
             
             if (!res.data.success) throw new Error(res.data.error || "Failed to create session");
+//save to Db 
+await saveSessionToDatabase(bot, chatId, res.data.session, state.userId);
 
             // Increment session count
             const incremented = await incrementSessionCount(state.userId);
