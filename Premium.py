@@ -17,6 +17,8 @@ import random
 # ----------------------------
 # Configuration and Logging
 # ----------------------------
+# Track active monitoring tasks
+active_tasks = {}
 load_dotenv()
 
 # Set up logging
@@ -1372,42 +1374,73 @@ def start_flask_in_thread():
 # ----------------------------
 # Main Program (Multi-User, Parallel)
 # ----------------------------
+# ----------------------------
+# Fetch sessions from server
+# ----------------------------
+def fetch_sessions_from_db():
+    try:
+        resp = requests.get(SERVER_URL, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+
+        # Each record: { id, session, userId, chatId, ... }
+        sessions = {}
+        for item in data:
+            if "session" in item and "userId" in item:
+                sessions[item["userId"]] = item["session"]
+        return dict(list(sessions.items())[:10])  # limit max 10
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch sessions from DB: {str(e)}")
+        return {}
+
+# ----------------------------
+# Manage monitoring pool
+# ----------------------------
+async def manage_sessions():
+    """Periodically refresh sessions from DB and sync monitoring tasks."""
+    global active_tasks
+
+    while True:
+        logger.info("🔄 Refreshing sessions from DB...")
+        sessions = fetch_sessions_from_db()
+
+        # Stop tasks for users no longer in DB
+        for user_id in list(active_tasks.keys()):
+            if user_id not in sessions:
+                logger.info(f"🛑 Stopping monitoring for user {user_id} (removed from DB)")
+                active_tasks[user_id].cancel()
+                del active_tasks[user_id]
+
+        # Start tasks for new users
+        for user_id, session in sessions.items():
+            if user_id not in active_tasks:
+                try:
+                    client = TelegramClient(StringSession(session), API_ID, API_HASH)
+                    task = asyncio.create_task(monitor_pet(session, client))
+                    active_tasks[user_id] = task
+                    logger.info(f"🐾 Started monitoring for new user {user_id}")
+                except Exception as e:
+                    logger.error(f"💥 Failed to start session for user {user_id}: {str(e)}")
+
+        # Keep max 10
+        if len(active_tasks) > 10:
+            logger.warning("⚠️ Too many tasks, trimming to 10 users")
+            for user_id in list(active_tasks.keys())[10:]:
+                active_tasks[user_id].cancel()
+                del active_tasks[user_id]
+
+        await asyncio.sleep(300)  # refresh every 5 minutes
+
+# ----------------------------
+# Main Runner
+# ----------------------------
 async def main() -> None:
-    """Entry point for multi-session monitoring (runs all sessions in parallel)."""
-    # Start Flask in the background
     start_flask_in_thread()
 
-    session_str = os.getenv("SESSION")
-    if not session_str:
-        logger.error("❌ No SESSION found in .env file")
-        return
-
-    # Split sessions by comma and limit to maximum 5 sessions
-    sessions = [s.strip() for s in session_str.split(',')][:5]
-
-    if not sessions:
-        logger.error("❌ No valid sessions found in SESSION environment variable")
-        return
-
-    logger.info(f"📱 Found {len(sessions)} session(s) to monitor")
-
-    tasks = []
-    for i, session in enumerate(sessions, 1):
-        try:
-            client = TelegramClient(StringSession(session), API_ID, API_HASH)
-            logger.info(f"🔄 Starting monitoring session {i}/{len(sessions)}")
-            tasks.append(monitor_pet(session, client))
-        except Exception as e:
-            logger.error(f"💥 Failed to start session {i}: {str(e)}")
-
-    if tasks:
-        # Run all sessions concurrently
-        await asyncio.gather(*tasks)
-    else:
-        logger.error("❌ No valid monitoring tasks could be started")
+    # Start the session manager loop
+    await manage_sessions()
 
 def run_async_code():
-    """Wrapper that restarts the asyncio loop if it fails."""
     while True:
         try:
             loop = asyncio.new_event_loop()
@@ -1421,11 +1454,8 @@ def run_async_code():
                 loop.close()
 
 if __name__ == '__main__':
-    # Configure logging
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-
-    # Start the main async loop
     run_async_code()
