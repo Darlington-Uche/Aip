@@ -14,6 +14,7 @@ import threading
 import json
 from collections import defaultdict
 import random
+import requests
 # ----------------------------
 # Configuration and Logging
 # ----------------------------
