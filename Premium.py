@@ -1398,8 +1398,8 @@ def fetch_sessions_from_db():
 
         sessions = {}
         for item in data:
-            if "session" in item and "userId" in item:
-                sessions[item["userId"]] = item["session"]
+            if "session" in item and "id" in item:
+                sessions[item["id"]] = item["session"]
 
         limited = dict(list(sessions.items())[:10])  # max 10
         logger.info(f"📂 Prepared {len(limited)} sessions for monitoring")
