@@ -428,7 +428,7 @@ bot.on("callback_query", async (ctx) => {
         setActionTimeout(chatId, ctx);
 
         bot.answerCallbackQuery(ctx.id);
-        bot.sendMessage(chatId, "📱 Send your phone number in international format (e.g., +123456789)");
+        bot.sendMessage(chatId, "📱 Send your phone number in international format (e.g., +123456789) you are to enter another telegram account number not this one you are currently on due to telegram restrictions");
     }
 });
 
