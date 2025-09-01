@@ -414,7 +414,7 @@ bot.on("callback_query", async (ctx) => {
         
         // Check session count
         const sessionCount = await getSessionCount(userId);
-        if (sessionCount >= 5) {
+        if (sessionCount >= 2) {
             // Reset payment status if user has created 5 sessions
             await resetPaymentStatus(userId);
             return bot.answerCallbackQuery(ctx.id, { 
@@ -492,7 +492,7 @@ bot.on("message", async (msg) => {
 
             // Check if user has reached maximum sessions (5 per user)
             const sessionCount = await getSessionCount(state.userId);
-            if (sessionCount >= 5) {
+            if (sessionCount >= 2) {
                 // Reset payment status
                 await resetPaymentStatus(state.userId);
                 await bot.sendMessage(chatId, 
