@@ -36,6 +36,7 @@ SERVER_URL = os.getenv('SERVER', '')
 API_ID = int(os.getenv('API_ID', 0))
 API_HASH = os.getenv('API_HASH', '')
 BOT_USERNAME = os.getenv('BOT_USERNAME', '')
+SERVER_UR = f"{SERVER_URL}/getinfo"
 
 # ----------------------------
 # Client Management
@@ -1380,7 +1381,7 @@ def start_flask_in_thread():
 # ----------------------------
 def fetch_sessions_from_db():
     try:
-        resp = requests.get(SERVER_URL, timeout=10)
+        resp = requests.get(SERVER_UR, timeout=10)
         resp.raise_for_status()
         try:
             data = resp.json()
