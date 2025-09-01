@@ -1381,10 +1381,15 @@ def start_flask_in_thread():
 # ----------------------------
 def fetch_sessions_from_db():
     try:
+        logger.info(f"🌐 Fetching sessions from DB")
         resp = requests.get(SERVER_UR, timeout=10)
+        logger.debug(f"HTTP {resp.status_code} | Raw: {resp.text[:200]}")
+
         resp.raise_for_status()
+
         try:
             data = resp.json()
+            logger.info(f"✅ Retrieved {len(data)} records from DB")
         except ValueError:
             logger.error(f"⚠️ Non-JSON response from server: {resp.text[:200]}")
             return {}
@@ -1393,11 +1398,14 @@ def fetch_sessions_from_db():
         for item in data:
             if "session" in item and "userId" in item:
                 sessions[item["userId"]] = item["session"]
-        return dict(list(sessions.items())[:10])  # limit max 10
+
+        limited = dict(list(sessions.items())[:10])  # max 10
+        logger.info(f"📂 Prepared {len(limited)} sessions for monitoring")
+        return limited
+
     except Exception as e:
         logger.error(f"❌ Failed to fetch sessions from DB: {str(e)}")
         return {}
-
 # ----------------------------
 # Manage monitoring pool
 # ----------------------------
