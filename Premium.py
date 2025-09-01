@@ -23,6 +23,7 @@ active_tasks = {}
 load_dotenv()
 
 # Set up logging
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,6 +32,7 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+logger.info(f"👥 Active monitoring tasks: {len(active_tasks)}")
 
 SERVER_URL = os.getenv('SERVER', '')
 API_ID = int(os.getenv('API_ID', 0))
