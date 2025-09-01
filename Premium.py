@@ -1382,9 +1382,12 @@ def fetch_sessions_from_db():
     try:
         resp = requests.get(SERVER_URL, timeout=10)
         resp.raise_for_status()
-        data = resp.json()
+        try:
+            data = resp.json()
+        except ValueError:
+            logger.error(f"⚠️ Non-JSON response from server: {resp.text[:200]}")
+            return {}
 
-        # Each record: { id, session, userId, chatId, ... }
         sessions = {}
         for item in data:
             if "session" in item and "userId" in item:
